@@ -1,0 +1,19 @@
+databaseChangeLog:
+  - include:
+      file: 'changesets/00-create_schema_scheduler_quartz.yaml'
+      relativeToChangelogFile: true
+  - include:
+      file: 'changesets/01-create_table_merchants.yaml'
+      relativeToChangelogFile: true
+  - include:
+      file: 'changesets/02-create_table_order_statuses.yaml'
+      relativeToChangelogFile: true
+  - changeSet:
+      id: '1.0.0-03-0'
+      author: 'd.sagalov'
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            encoding: utf8
+            path: 'scripts/MP-001-insert_predefined_merchants.sql'
+            relativeToChangelogFile: true
