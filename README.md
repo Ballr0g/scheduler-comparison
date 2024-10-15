@@ -6,7 +6,7 @@ A repository is created to compare the developer experience of a Spring Boot App
 
 # Demo application legend
 
-We're working on a marketplace order processing adapter application that keeps forwarding multiple order statuses
+We're working on a marketplace order processing adapter application that keeps forwarding various order statuses
 to a user notification platform via a Kafka topic. Each order requires custom handling logic determined by its status
 (although we don't have any specific details because the system analyst working on the task is on a 60-days vacation).
 Furthermore, some large merchants featured on our marketplace require dedicated handling due to the large amounts
