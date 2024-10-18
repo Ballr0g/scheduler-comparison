@@ -1,0 +1,55 @@
+databaseChangeLog:
+  -   changeSet:
+        id: '1.0.0-02-0'
+        author: 'ballr0g'
+        comment: 'Create table order_statuses.'
+        changes:
+          - createTable:
+              tableName: order_statuses
+              schemaName: scheduler_quartz
+              remarks: 'The table for storing merchants of our marketplace.'
+              columns:
+                - column:
+                    name: id
+                    type: bigint
+                    remarks: 'Unique id of the order status entry.'
+                    autoIncrement: true
+                    constraints:
+                      primaryKey: true
+                - column:
+                    name: order_id
+                    type: uuid
+                    remarks: 'Id of the order changed.'
+                    constraints:
+                      nullable: false
+                - column:
+                    name: status_change_time
+                    type: timestamp
+                    remarks: 'Time when the order changed to the status of this record.'
+                    constraints:
+                      nullable: false
+                - column:
+                    name: operation_status
+                    type: varchar(31)
+                    remarks: 'Status of this record in the transactional outbox table.'
+                    defaultValue: 'READY_FOR_PROCESSING'
+                    constraints:
+                      nullable: false
+                      checkConstraint: |
+                        operation_status IN (
+                          'READY_FOR_PROCESSING', 'SENT_TO_NOTIFIER', 'FOR_RETRY', 'RETRIES_EXCEEDED', 'ERROR'
+                        )
+                - column:
+                    name: record_read_count
+                    type: bigint
+                    remarks: 'Number of reads of this record.'
+                    defaultValueNumeric: '0'
+                    constraints:
+                      nullable: false
+                - column:
+                    name: order_status
+                    type: varchar(31)
+                    remarks: 'Status of the order at the given point of time.'
+                    constraints:
+                      nullable: false
+                      checkConstraint: "order_status IN ('PAID', 'DELIVERED', 'FAILED', 'CANCELLED')"

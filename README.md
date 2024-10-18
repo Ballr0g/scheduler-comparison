@@ -17,8 +17,6 @@ Our implementation is going to load the orders from a relational database (Postg
 because our notorious marketplace master system is a spooky legacy monolith working with one) grouped by
 operation type and merchant id every minute, filter out the operations in the FAILED status in case they have
 the REFUND flag set to true and send the results to a Kafka topic (later consumed by the notification platform).
-- For simplicity, no monitoring or error handling will be present
-- All the jobs are created on application startup from a Spring configuration
 - There are 5 merchants:
   - Tiny Mistress, a luxury tier clothing manufacturer primarily targeting ladies of all ages
   - SungSam, a smartphone manufacturer
@@ -32,3 +30,9 @@ the REFUND flag set to true and send the results to a Kafka topic (later consume
     (and probably got eaten by an unimaginable force)
   - CANCELLED: the client has randomly decided they no longer need the order and cancelled it. The buff delivery pigeon
     is lucky enough to decide what to do with the order to their own likings.
+
+# Implementation notices
+- For simplicity, neither monitoring nor appropriate error handling will be present.
+- The jobs are created on application startup from a Spring configuration since the goal is to test dynamic job setup.
+- The data model definition can be found in Liquibase files for each submodule.
+- There is intentional data model/config duplication to represent the effort it takes to set up each scheduler app.

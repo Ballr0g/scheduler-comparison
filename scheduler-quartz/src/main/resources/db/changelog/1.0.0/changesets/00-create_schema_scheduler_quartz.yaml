@@ -1,0 +1,8 @@
+databaseChangeLog:
+  -   changeSet:
+        id: '1.0.0-00-0'
+        author: 'ballr0g'
+        comment: 'Create schema scheduler_quartz'
+        changes:
+          - sql:
+              sql: 'CREATE SCHEMA IF NOT EXISTS scheduler_quartz;'
