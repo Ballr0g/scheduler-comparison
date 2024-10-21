@@ -10,6 +10,7 @@ version = "0.0.1-SNAPSHOT"
 
 val liquibaseVersion: String by project
 val postgresVersion: String by project
+val kotlinLoggingVersion: String by project
 
 java {
     toolchain {
@@ -31,6 +32,9 @@ dependencies {
     implementation("org.liquibase:liquibase-core:${liquibaseVersion}")
     // PostgreSQL.
     implementation("org.postgresql:postgresql:${postgresVersion}")
+    // Kotlin logging.
+    implementation("io.github.oshai:kotlin-logging:${kotlinLoggingVersion}")
+
 
     // --> Test Implementation Dependencies <--
     testImplementation("org.springframework.boot:spring-boot-starter-test")

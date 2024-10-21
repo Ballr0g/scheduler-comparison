@@ -11,6 +11,9 @@ spring:
   profiles:
     active:
       - ${SPRING_PROFILE_NAME:dev}
+  quartz:
+    auto-startup: true
+    scheduler-name: "Demo quartz scheduler"
   lifecycle:
     timeout-per-shutdown-phase: 4m
   main:
@@ -37,3 +40,9 @@ spring:
     producer:
       bootstrap-servers: localhost:29092
       client-id: scheduler-comparison-quartz-1
+
+scheduler:
+  jobs:
+    merchantIds: 1, 2, 3
+    orderStatuses: PAID, DELIVERED, FAILED, CANCELLED
+    cron: "0 */1 * * * ?"
