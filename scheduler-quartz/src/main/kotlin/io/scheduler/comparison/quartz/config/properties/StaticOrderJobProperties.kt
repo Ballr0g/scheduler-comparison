@@ -20,6 +20,7 @@ data class StaticOrderJobProperties(
         val merchantIds: Set<Long>,
         val orderStatuses: Set<OrderStatus>,
         val cron: String,
+        val ignoredByCommon: Boolean = true
     )
 
 }

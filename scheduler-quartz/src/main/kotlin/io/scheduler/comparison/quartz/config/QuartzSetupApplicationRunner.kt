@@ -32,6 +32,7 @@ class QuartzSetupApplicationRunner(
 
         if (jobExecutionProperties.commonMerchantJobs.isNotEmpty()) {
             val merchantsForExclude = jobExecutionProperties.dedicatedMerchantJobs.asSequence()
+                .filter { it.ignoredByCommon }
                 .flatMap { it.merchantIds.asSequence() }
                 .toSet()
 

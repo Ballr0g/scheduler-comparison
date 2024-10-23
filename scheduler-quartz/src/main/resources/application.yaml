@@ -45,14 +45,15 @@ scheduler:
   jobs:
     dedicated-merchant-jobs:
       - name: "Big Merchants"
-        merchantIds: [4, 5]
-        orderStatuses: PAID, DELIVERED, FAILED, CANCELLED
+        merchant-ids: [4, 5]
+        order-statuses: [PAID, DELIVERED, FAILED, CANCELLED]
         cron: "0 */1 * * * ?"
       - name: "Loca-Lola cancellations"
-        merchantIds: [4]
-        orderStatuses: CANCELLED
+        merchant-ids: [4]
+        order-statuses: [CANCELLED]
         cron: "0 */1 * * * ?"
+        ignored-by-common: false
     common-merchant-jobs:
       - name: "default"
-        order-statuses: PAID, DELIVERED, FAILED, CANCELLED
+        order-statuses: [PAID, DELIVERED, FAILED, CANCELLED]
         cron: "0 */1 * * * ?"
