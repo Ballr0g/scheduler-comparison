@@ -1,7 +1,12 @@
 package io.scheduler.comparison.quartz.config
 
 import io.scheduler.comparison.quartz.config.properties.StaticOrderJobProperties
-import io.scheduler.comparison.quartz.jobs.OrderHandlingJob
+import io.scheduler.comparison.quartz.jobs.CommonOrderJob
+import io.scheduler.comparison.quartz.jobs.CommonOrderJobParams
+import io.scheduler.comparison.quartz.jobs.DedicatedOrderJob
+import io.scheduler.comparison.quartz.jobs.DedicatedOrderJobParams
+import io.scheduler.comparison.quartz.service.CommonJobService
+import io.scheduler.comparison.quartz.service.DedicatedJobService
 import org.quartz.CronScheduleBuilder
 import org.quartz.JobBuilder
 import org.quartz.JobDataMap
@@ -15,38 +20,90 @@ import org.springframework.stereotype.Component
 @Component
 class QuartzSetupApplicationRunner(
     val jobExecutionProperties: StaticOrderJobProperties,
-    val schedulerFactoryBean: SchedulerFactoryBean
+    val schedulerFactoryBean: SchedulerFactoryBean,
+    val commonJobService: CommonJobService,
+    val dedicatedJobService: DedicatedJobService
 ) : ApplicationRunner {
 
     override fun run(args: ApplicationArguments?) {
-        for (job in jobExecutionProperties.orderJobList) {
-            registerOrderHandlingJob(job)
+        jobExecutionProperties.dedicatedMerchantJobs.forEach {
+            registerDedicatedOrderHandlingJob(it)
+        }
+
+        if (jobExecutionProperties.commonMerchantJobs.isNotEmpty()) {
+            val merchantsForExclude = jobExecutionProperties.dedicatedMerchantJobs.asSequence()
+                .flatMap { it.merchantIds.asSequence() }
+                .toSet()
+
+            jobExecutionProperties.commonMerchantJobs.forEach {
+                registerCommonOrderHandlingJob(it, merchantsForExclude)
+            }
         }
     }
 
-    private fun registerOrderHandlingJob(orderJobProperties: StaticOrderJobProperties.StaticOrderJob) {
-        val orderHandlingJobDetails = buildJobDetails(orderJobProperties)
-        val orderHandlingTrigger = buildJobTrigger(orderHandlingJobDetails, orderJobProperties)
+    private fun registerCommonOrderHandlingJob(
+        orderJobProperties: StaticOrderJobProperties.StaticCommonOrderJob,
+        excludedMerchantIds: Set<Long>
+    ) {
+        val commonOrderJobDetails = buildCommonOrderHandlingJob(orderJobProperties, excludedMerchantIds)
+        val commonOrderTrigger = buildCommonOrderJobTrigger(commonOrderJobDetails, orderJobProperties)
 
         val scheduler = schedulerFactoryBean.scheduler
-        scheduler.scheduleJob(orderHandlingJobDetails, orderHandlingTrigger)
-
+        scheduler.scheduleJob(commonOrderJobDetails, commonOrderTrigger)
     }
 
-    private fun buildJobDetails(orderJobProperties: StaticOrderJobProperties.StaticOrderJob)
-        = JobBuilder.newJob(OrderHandlingJob::class.java)
+    private fun buildCommonOrderHandlingJob(
+        orderJobProperties: StaticOrderJobProperties.StaticCommonOrderJob,
+        excludedMerchantIds: Set<Long>
+    ) = JobBuilder.newJob(CommonOrderJob::class.java)
         .withIdentity(orderJobProperties.name)
         .usingJobData(JobDataMap(mapOf(
-            "name" to orderJobProperties.name,
-            "merchantIds" to orderJobProperties.merchantIds,
-            "orderStatuses" to orderJobProperties.orderStatuses,
-            "cron" to orderJobProperties.cron,
+            CommonOrderJobParams.JOB_NAME.value to orderJobProperties.name,
+            CommonOrderJobParams.EXCLUDED_MERCHANT_IDS.value to excludedMerchantIds,
+            CommonOrderJobParams.ORDER_STATUSES.value to orderJobProperties.orderStatuses,
+            CommonOrderJobParams.JOB_CRON.value to orderJobProperties.cron,
+            CommonOrderJobParams.JOB_HANDLER.value to commonJobService,
         )))
         .build()
 
-    private fun buildJobTrigger(
+    private fun buildCommonOrderJobTrigger(
         orderHandlingJobDetails: JobDetail,
-        orderJobProperties: StaticOrderJobProperties.StaticOrderJob
+        orderJobProperties: StaticOrderJobProperties.StaticCommonOrderJob
+    ) = TriggerBuilder.newTrigger()
+        .forJob(orderHandlingJobDetails)
+        .withIdentity("${orderJobProperties.name} trigger")
+        .withSchedule(CronScheduleBuilder
+            .cronSchedule(orderJobProperties.cron)
+            .withMisfireHandlingInstructionDoNothing()
+        )
+        .build()
+
+    private fun registerDedicatedOrderHandlingJob(
+        orderJobProperties: StaticOrderJobProperties.StaticDedicatedMerchantsOrderJob
+    ) {
+        val dedicatedOrderJobDetails = buildDedicatedOrderJobDetails(orderJobProperties)
+        val dedicatedOrderTrigger = buildDedicatedOrderJobTrigger(dedicatedOrderJobDetails, orderJobProperties)
+
+        val scheduler = schedulerFactoryBean.scheduler
+        scheduler.scheduleJob(dedicatedOrderJobDetails, dedicatedOrderTrigger)
+    }
+
+    private fun buildDedicatedOrderJobDetails(
+        orderJobProperties: StaticOrderJobProperties.StaticDedicatedMerchantsOrderJob
+    ) = JobBuilder.newJob(DedicatedOrderJob::class.java)
+        .withIdentity(orderJobProperties.name)
+        .usingJobData(JobDataMap(mapOf(
+            DedicatedOrderJobParams.JOB_NAME.value to orderJobProperties.name,
+            DedicatedOrderJobParams.MERCHANT_IDS.value to orderJobProperties.merchantIds,
+            DedicatedOrderJobParams.ORDER_STATUSES.value to orderJobProperties.orderStatuses,
+            DedicatedOrderJobParams.JOB_CRON.value to orderJobProperties.cron,
+            DedicatedOrderJobParams.JOB_HANDLER.value to dedicatedJobService,
+        )))
+        .build()
+
+    private fun buildDedicatedOrderJobTrigger(
+        orderHandlingJobDetails: JobDetail,
+        orderJobProperties: StaticOrderJobProperties.StaticDedicatedMerchantsOrderJob
     ) = TriggerBuilder.newTrigger()
         .forJob(orderHandlingJobDetails)
         .withIdentity("${orderJobProperties.name} trigger")

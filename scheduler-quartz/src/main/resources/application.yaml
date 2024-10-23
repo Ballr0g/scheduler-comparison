@@ -43,8 +43,16 @@ spring:
 
 scheduler:
   jobs:
-    orderJobList:
-      - name: "default"
-        merchantIds: 1, 2, 3
+    dedicated-merchant-jobs:
+      - name: "Big Merchants"
+        merchantIds: [4, 5]
         orderStatuses: PAID, DELIVERED, FAILED, CANCELLED
+        cron: "0 */1 * * * ?"
+      - name: "Loca-Lola cancellations"
+        merchantIds: [4]
+        orderStatuses: CANCELLED
+        cron: "0 */1 * * * ?"
+    common-merchant-jobs:
+      - name: "default"
+        order-statuses: PAID, DELIVERED, FAILED, CANCELLED
         cron: "0 */1 * * * ?"

@@ -5,13 +5,20 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 
 @ConfigurationProperties(prefix = "scheduler.jobs")
 data class StaticOrderJobProperties(
-    val orderJobList: List<StaticOrderJob>
+    val dedicatedMerchantJobs: List<StaticDedicatedMerchantsOrderJob> = emptyList(),
+    val commonMerchantJobs: List<StaticCommonOrderJob> = emptyList(),
 ){
 
-    data class StaticOrderJob(
+    data class StaticCommonOrderJob(
         val name: String,
-        val merchantIds: List<Long>,
-        val orderStatuses: List<OrderStatus>,
+        val orderStatuses: Set<OrderStatus>,
+        val cron: String,
+    )
+
+    data class StaticDedicatedMerchantsOrderJob(
+        val name: String,
+        val merchantIds: Set<Long>,
+        val orderStatuses: Set<OrderStatus>,
         val cron: String,
     )
 
