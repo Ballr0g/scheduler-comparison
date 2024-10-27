@@ -23,6 +23,15 @@ databaseChangeLog:
                     constraints:
                       nullable: false
                 - column:
+                    name: merchant_id
+                    type: bigint
+                    remarks: 'Merchant this order is associated with'
+                    constraints:
+                      foreignKeyName: fk_scheduler_quartz_order_statuses_merchant_id
+                      referencedTableSchemaName: scheduler_quartz
+                      referencedTableName: merchants
+                      referencedColumnNames: id
+                - column:
                     name: status_change_time
                     type: timestamp
                     remarks: 'Time when the order changed to the status of this record.'
@@ -35,10 +44,6 @@ databaseChangeLog:
                     defaultValue: 'READY_FOR_PROCESSING'
                     constraints:
                       nullable: false
-                      checkConstraint: |
-                        operation_status IN (
-                          'READY_FOR_PROCESSING', 'SENT_TO_NOTIFIER', 'FOR_RETRY', 'RETRIES_EXCEEDED', 'ERROR'
-                        )
                 - column:
                     name: record_read_count
                     type: bigint
@@ -52,4 +57,23 @@ databaseChangeLog:
                     remarks: 'Status of the order at the given point of time.'
                     constraints:
                       nullable: false
-                      checkConstraint: "order_status IN ('PAID', 'DELIVERED', 'FAILED', 'CANCELLED')"
+  -   changeSet:
+        id: '1.0.0-02-1'
+        author: 'ballr0g'
+        changes:
+          - sql:
+              sql: |
+                ALTER TABLE scheduler_quartz.order_statuses
+                ADD CONSTRAINT chk_scheduler_quartz_operation_status
+                CHECK (operation_status IN (
+                  'READY_FOR_PROCESSING', 'SENT_TO_NOTIFIER', 'FOR_RETRY', 'RETRIES_EXCEEDED', 'ERROR'
+                ));
+  -   changeSet:
+        id: '1.0.0-02-2'
+        author: 'ballr0g'
+        changes:
+          - sql:
+              sql: |
+                ALTER TABLE scheduler_quartz.order_statuses
+                ADD CONSTRAINT chk_scheduler_quartz_order_status
+                CHECK (order_status IN ('PAID', 'DELIVERED', 'FAILED', 'CANCELLED'));
