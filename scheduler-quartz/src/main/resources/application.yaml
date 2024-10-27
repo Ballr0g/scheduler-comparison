@@ -48,12 +48,23 @@ scheduler:
         merchant-ids: [4, 5]
         order-statuses: [PAID, DELIVERED, FAILED, CANCELLED]
         cron: "0 */1 * * * ?"
+        max-count-per-execution: 30
+        page-size: 10
       - name: "Loca-Lola cancellations"
         merchant-ids: [4]
         order-statuses: [CANCELLED]
         cron: "0 */1 * * * ?"
         ignored-by-common: false
+        max-count-per-execution: 30
+        page-size: 10
     common-merchant-jobs:
       - name: "default"
         order-statuses: [PAID, DELIVERED, FAILED, CANCELLED]
         cron: "0 */1 * * * ?"
+
+
+---
+spring:
+  config:
+    activate:
+      on-profile: paginated

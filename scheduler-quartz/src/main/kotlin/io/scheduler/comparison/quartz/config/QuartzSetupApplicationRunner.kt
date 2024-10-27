@@ -99,6 +99,8 @@ class QuartzSetupApplicationRunner(
             DedicatedOrderJobParams.ORDER_STATUSES.value to orderJobProperties.orderStatuses,
             DedicatedOrderJobParams.JOB_CRON.value to orderJobProperties.cron,
             DedicatedOrderJobParams.JOB_HANDLER.value to dedicatedJobService,
+            DedicatedOrderJobParams.PAGE_SIZE.value to orderJobProperties.pageSize,
+            DedicatedOrderJobParams.MAX_COUNT_PER_EXECUTION.value to orderJobProperties.maxCountPerExecution,
         )))
         .build()
 
