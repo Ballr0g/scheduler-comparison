@@ -31,11 +31,18 @@ class DedicatedJobService(
         val maxPageSize = orderJobMetadata.pageSize
         var pagesLeft = ceil(orderJobMetadata.maxCountPerExecution.toDouble() / maxPageSize).toLong()
         var curPageContents: List<OperationOnOrder> = emptyList()
-        while (pagesLeft > 0 && fetchNextPage(maxPageSize).also { curPageContents = it }.isNotEmpty()) {
+        while (
+            pagesLeft-- > 0
+            && fetchNextPage(maxPageSize, orderJobData).also { curPageContents = it }.isNotEmpty()
+        ) {
             notificationPlatformSender.sendAllOperationsOnOrder(curPageContents)
-            --pagesLeft
+            val updatedIds = curPageContents.asSequence()
+                .map { it.id }
+                .toSet()
+            operationOnOrderRepository.markOrderOperationsAsProcessed(updatedIds)
         }
     }
 
-    fun fetchNextPage(maxPageSize: Long) = operationOnOrderRepository.readUnprocessed(maxPageSize)
+    fun fetchNextPage(maxPageSize: Long, orderJobData: DedicatedOrderJobData)
+        = operationOnOrderRepository.readUnprocessedWithReadCountIncrement(maxPageSize, orderJobData)
 }

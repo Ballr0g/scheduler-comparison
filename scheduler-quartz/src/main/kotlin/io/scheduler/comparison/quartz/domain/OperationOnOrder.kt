@@ -6,6 +6,7 @@ import java.util.UUID
 class OperationOnOrder(
     val id: Long,
     val orderId: UUID,
+    val merchantId: Long,
     val statusChangeTime: LocalDateTime,
     val orderOperationStatus: OrderOperationStatus,
     val recordReadCount: Long,
