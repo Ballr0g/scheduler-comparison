@@ -63,10 +63,3 @@ scheduler:
       - name: "default"
         order-statuses: [PAID, DELIVERED, FAILED, CANCELLED]
         cron: "0 */1 * * * ?"
-
-
----
-spring:
-  config:
-    activate:
-      on-profile: paginated
