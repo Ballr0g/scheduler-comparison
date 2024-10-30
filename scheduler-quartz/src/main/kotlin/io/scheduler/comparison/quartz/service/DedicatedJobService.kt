@@ -3,12 +3,12 @@ package io.scheduler.comparison.quartz.service
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.scheduler.comparison.quartz.repositories.OperationOnOrderRepository
 import io.scheduler.comparison.quartz.domain.OperationOnOrder
+import io.scheduler.comparison.quartz.jobs.pagination.DedicatedJobPaginator
 import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobData
 import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobMetadata
 import io.scheduler.comparison.quartz.messaging.NotificationPlatformSender
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
-import kotlin.math.ceil
 
 @Component
 class DedicatedJobService(
@@ -28,21 +28,22 @@ class DedicatedJobService(
         log.info { "Job ${orderJobMetadata.jobName}: " +
                 "merchantIds=${orderJobData.merchantIds}, orderStatuses=${orderJobData.orderStatuses}" }
 
-        val maxPageSize = orderJobMetadata.pageSize
-        var pagesLeft = ceil(orderJobMetadata.maxCountPerExecution.toDouble() / maxPageSize).toLong()
-        var curPageContents: List<OperationOnOrder> = emptyList()
-        while (
-            pagesLeft-- > 0
-            && fetchNextPage(maxPageSize, orderJobData).also { curPageContents = it }.isNotEmpty()
-        ) {
-            notificationPlatformSender.sendAllOperationsOnOrder(curPageContents)
-            val updatedIds = curPageContents.asSequence()
-                .map { it.id }
-                .toSet()
-            operationOnOrderRepository.markOrderOperationsAsProcessed(updatedIds)
-        }
+        retrievePages(orderJobData, orderJobMetadata).forEach { handleNextPage(it) }
     }
 
-    fun fetchNextPage(maxPageSize: Long, orderJobData: DedicatedOrderJobData)
-        = operationOnOrderRepository.readUnprocessedWithReadCountIncrement(maxPageSize, orderJobData)
+    private fun handleNextPage(page: List<OperationOnOrder>) {
+        notificationPlatformSender.sendAllOperationsOnOrder(page)
+        val updatedIds = page.asSequence()
+            .map { it.id }
+            .toSet()
+        operationOnOrderRepository.markOrderOperationsAsProcessed(updatedIds)
+    }
+
+    private fun retrievePages(orderJobData: DedicatedOrderJobData,
+                              orderJobMetadata: DedicatedOrderJobMetadata) = DedicatedJobPaginator(
+        jobData = orderJobData,
+        jobMetadata = orderJobMetadata,
+        pageExtractor = operationOnOrderRepository::readUnprocessedWithReadCountIncrement
+    )
+
 }
