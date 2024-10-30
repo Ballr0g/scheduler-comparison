@@ -19,7 +19,7 @@ operation type and merchant id every minute and send the results to a Kafka topi
 (later consumed by the notification platform).
 
 We also need to send the Loca-Lola cancellations in the FAILED status to yet another topic in case they have
-the REFUND flag set to true in the order_refunds table.
+the ELIGIBLE_FOR_REFUND flag set to true in the order_refunds table.
 
 WildFruits needs a customization in comparison to general flow: it should set the operations in the CANCELLED status to
 the ERROR status because we aren't supposed to handle cancellations but our spooky monolith keeps putting them in the
