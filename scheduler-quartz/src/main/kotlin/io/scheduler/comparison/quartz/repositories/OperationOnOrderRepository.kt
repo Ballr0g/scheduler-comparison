@@ -23,7 +23,7 @@ class OperationOnOrderRepository(
                     AND merchant_id IN (:merchantIds)
                     AND order_statuses.order_status IN (:orderStatuses)
                 LIMIT :maxPageSize
-                FOR UPDATE
+                FOR UPDATE SKIP LOCKED
         """
 
         @Language("PostgreSQL")
