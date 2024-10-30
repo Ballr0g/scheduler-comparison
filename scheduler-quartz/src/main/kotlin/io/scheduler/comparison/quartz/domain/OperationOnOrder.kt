@@ -3,7 +3,7 @@ package io.scheduler.comparison.quartz.domain
 import java.time.LocalDateTime
 import java.util.UUID
 
-class OperationOnOrder(
+data class OperationOnOrder(
     val id: Long,
     val orderId: UUID,
     val merchantId: Long,
