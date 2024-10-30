@@ -11,6 +11,7 @@ version = "0.0.1-SNAPSHOT"
 val liquibaseVersion: String by project
 val postgresVersion: String by project
 val kotlinLoggingVersion: String by project
+val jacksonJsr310Version: String by project
 
 java {
     toolchain {
@@ -36,6 +37,8 @@ dependencies {
     implementation("org.postgresql:postgresql:${postgresVersion}")
     // Kotlin logging.
     implementation("io.github.oshai:kotlin-logging:${kotlinLoggingVersion}")
+    // Jackson support for Java LocalDateTime
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonJsr310Version}")
 
 
     // --> Test Implementation Dependencies <--
