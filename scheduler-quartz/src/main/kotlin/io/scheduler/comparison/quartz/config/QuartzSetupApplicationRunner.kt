@@ -1,9 +1,7 @@
 package io.scheduler.comparison.quartz.config
 
 import io.scheduler.comparison.quartz.config.properties.StaticOrderJobProperties
-import io.scheduler.comparison.quartz.jobs.CommonOrderJob
 import io.scheduler.comparison.quartz.jobs.CommonOrderJobParams
-import io.scheduler.comparison.quartz.jobs.DedicatedOrderJob
 import io.scheduler.comparison.quartz.jobs.DedicatedOrderJobParams
 import io.scheduler.comparison.quartz.service.CommonJobService
 import io.scheduler.comparison.quartz.service.DedicatedJobService
@@ -56,7 +54,7 @@ class QuartzSetupApplicationRunner(
     private fun buildCommonOrderHandlingJob(
         orderJobProperties: StaticOrderJobProperties.StaticCommonOrderJob,
         excludedMerchantIds: Set<Long>
-    ) = JobBuilder.newJob(CommonOrderJob::class.java)
+    ) = JobBuilder.newJob(orderJobProperties.jobClass)
         .withIdentity(orderJobProperties.name)
         .usingJobData(JobDataMap(mapOf(
             CommonOrderJobParams.JOB_NAME.value to orderJobProperties.name,
@@ -91,7 +89,7 @@ class QuartzSetupApplicationRunner(
 
     private fun buildDedicatedOrderJobDetails(
         orderJobProperties: StaticOrderJobProperties.StaticDedicatedMerchantsOrderJob
-    ) = JobBuilder.newJob(DedicatedOrderJob::class.java)
+    ) = JobBuilder.newJob(orderJobProperties.jobClass)
         .withIdentity(orderJobProperties.name)
         .usingJobData(JobDataMap(mapOf(
             DedicatedOrderJobParams.JOB_NAME.value to orderJobProperties.name,

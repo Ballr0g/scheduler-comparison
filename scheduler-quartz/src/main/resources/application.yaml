@@ -46,20 +46,24 @@ spring:
 scheduler:
   jobs:
     dedicated-merchant-jobs:
-      - name: "Big Merchants"
-        merchant-ids: [4, 5]
+      - name: "Loca-Lola failure refunds"
+        job-class: io.scheduler.comparison.quartz.jobs.DedicatedOrderJob
+        merchant-ids: [4]
+        order-statuses: [FAILED]
+        cron: "0 */1 * * * ?"
+        # Since this action does not intersect with the other flow, it can be executed concurrently.
+        ignored-by-common: false
+        max-count-per-execution: 30
+        page-size: 10
+      - name: "WildFruits handler"
+        job-class: io.scheduler.comparison.quartz.jobs.DedicatedOrderJob
+        merchant-ids: [5]
         order-statuses: [PAID, DELIVERED, FAILED, CANCELLED]
         cron: "0 */1 * * * ?"
         max-count-per-execution: 30
         page-size: 10
-      - name: "Loca-Lola cancellations"
-        merchant-ids: [4]
-        order-statuses: [CANCELLED]
-        cron: "0 */1 * * * ?"
-        ignored-by-common: false
-        max-count-per-execution: 30
-        page-size: 10
     common-merchant-jobs:
       - name: "default"
+        job-class: io.scheduler.comparison.quartz.jobs.CommonOrderJob
         order-statuses: [PAID, DELIVERED, FAILED, CANCELLED]
         cron: "0 */1 * * * ?"
