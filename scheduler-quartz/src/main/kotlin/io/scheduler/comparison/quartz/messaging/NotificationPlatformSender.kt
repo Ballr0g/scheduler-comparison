@@ -9,7 +9,7 @@ import java.util.concurrent.CompletableFuture
 
 @Component
 class NotificationPlatformSender(
-    val kafkaTemplate: KafkaTemplate<String, OperationOnOrder>,
+    val kafkaTemplate: KafkaTemplate<String, Any>,
     val kafkaProperties: KafkaProperties
 ) {
 

@@ -40,8 +40,6 @@ spring:
     producer:
       bootstrap-servers: localhost:29092
       client-id: scheduler-comparison-quartz-1
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
     template:
       default-topic: order-statuses-quartz.1
 
