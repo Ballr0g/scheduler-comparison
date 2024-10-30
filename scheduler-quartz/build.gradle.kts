@@ -27,6 +27,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-quartz")
     // Spring Boot starter JDBC.
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    // Spring Kafka.
+    implementation("org.springframework.kafka:spring-kafka")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     // Liquibase.
     implementation("org.liquibase:liquibase-core:${liquibaseVersion}")
