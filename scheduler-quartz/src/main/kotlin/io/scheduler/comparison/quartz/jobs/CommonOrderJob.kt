@@ -11,6 +11,7 @@ import org.quartz.JobExecutionContext
 /**
  * A general-purpose job execution class that works with all merchants except for those used for dedicated jobs.
  */
+@Suppress("UNUSED")
 class CommonOrderJob : Job {
 
     private lateinit var orderJobData: CommonOrderJobData

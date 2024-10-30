@@ -11,6 +11,7 @@ import org.quartz.JobExecutionContext
 /**
  * Dedicated job class instances are used to process only the merchants with specified IDs during initialization.
  */
+@Suppress("UNUSED")
 class DedicatedOrderJob : Job {
 
     private lateinit var orderJobData: DedicatedOrderJobData
