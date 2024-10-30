@@ -131,4 +131,22 @@ class DedicatedJobPaginatorTest {
         assertEquals(testOperationOnOrder2, actualSecondPage[0])
     }
 
+    @Test
+    fun `Page size does not exceed max entries count when more data available than queried via next()`() {
+        // given
+        val jobMetadataExcessivePageSize = testDedicatedOrderJobMetadata.copy(
+            pageSize = 2,
+            maxCountPerExecution = 1
+        )
+        val dedicatedJobPaginator = DedicatedJobPaginator(testDedicatedOrderJobData, jobMetadataExcessivePageSize)
+        { pageSize, _ -> testOperationsOnOrder.take(pageSize.toInt()) }
+
+        // when
+        val actualPage = dedicatedJobPaginator.next()
+
+        // then
+        assertEquals(jobMetadataExcessivePageSize.maxCountPerExecution, actualPage.size.toLong())
+        assertEquals(testOperationOnOrder1, actualPage[0])
+    }
+
 }
