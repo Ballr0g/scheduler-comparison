@@ -1,12 +1,10 @@
-package io.scheduler.comparison.quartz.config
+package io.scheduler.comparison.quartz.config.spring.application
 
 import io.scheduler.comparison.quartz.config.properties.StaticOrderJobProperties
 import io.scheduler.comparison.quartz.jobs.CommonOrderJob
 import io.scheduler.comparison.quartz.jobs.CommonOrderJobParams
 import io.scheduler.comparison.quartz.jobs.DedicatedOrderJob
 import io.scheduler.comparison.quartz.jobs.DedicatedOrderJobParams
-import io.scheduler.comparison.quartz.service.CommonJobService
-import io.scheduler.comparison.quartz.service.DedicatedJobService
 import org.quartz.CronScheduleBuilder
 import org.quartz.JobBuilder
 import org.quartz.JobDataMap
@@ -21,8 +19,6 @@ import org.springframework.stereotype.Component
 class QuartzSetupApplicationRunner(
     val jobExecutionProperties: StaticOrderJobProperties,
     val schedulerFactoryBean: SchedulerFactoryBean,
-    val commonJobService: CommonJobService,
-    val dedicatedJobService: DedicatedJobService
 ) : ApplicationRunner {
 
     override fun run(args: ApplicationArguments?) {
@@ -34,7 +30,7 @@ class QuartzSetupApplicationRunner(
             val merchantsForExclude = jobExecutionProperties.dedicatedMerchantJobs.asSequence()
                 .filter { it.ignoredByCommon }
                 .flatMap { it.merchantIds.asSequence() }
-                .toSet()
+                .toList()
 
             jobExecutionProperties.commonMerchantJobs.forEach {
                 registerCommonOrderHandlingJob(it, merchantsForExclude)
@@ -44,7 +40,7 @@ class QuartzSetupApplicationRunner(
 
     private fun registerCommonOrderHandlingJob(
         orderJobProperties: StaticOrderJobProperties.StaticCommonOrderJob,
-        excludedMerchantIds: Set<Long>
+        excludedMerchantIds: List<Long>
     ) {
         val commonOrderJobDetails = buildCommonOrderHandlingJob(orderJobProperties, excludedMerchantIds)
         val commonOrderTrigger = buildCommonOrderJobTrigger(commonOrderJobDetails, orderJobProperties)
@@ -55,7 +51,7 @@ class QuartzSetupApplicationRunner(
 
     private fun buildCommonOrderHandlingJob(
         orderJobProperties: StaticOrderJobProperties.StaticCommonOrderJob,
-        excludedMerchantIds: Set<Long>
+        excludedMerchantIds: List<Long>
     ) = JobBuilder.newJob(CommonOrderJob::class.java)
         .withIdentity(orderJobProperties.name)
         .usingJobData(JobDataMap(mapOf(
@@ -63,7 +59,9 @@ class QuartzSetupApplicationRunner(
             CommonOrderJobParams.EXCLUDED_MERCHANT_IDS.value to excludedMerchantIds,
             CommonOrderJobParams.ORDER_STATUSES.value to orderJobProperties.orderStatuses,
             CommonOrderJobParams.JOB_CRON.value to orderJobProperties.cron,
-            CommonOrderJobParams.JOB_HANDLER.value to commonJobService,
+            CommonOrderJobParams.PAGE_SIZE.value to orderJobProperties.pageSize,
+            CommonOrderJobParams.MAX_COUNT_PER_EXECUTION.value to orderJobProperties.maxCountPerExecution,
+            CommonOrderJobParams.JOB_HANDLER.value to orderJobProperties.jobHandler,
         )))
         .build()
 
@@ -98,7 +96,9 @@ class QuartzSetupApplicationRunner(
             DedicatedOrderJobParams.MERCHANT_IDS.value to orderJobProperties.merchantIds,
             DedicatedOrderJobParams.ORDER_STATUSES.value to orderJobProperties.orderStatuses,
             DedicatedOrderJobParams.JOB_CRON.value to orderJobProperties.cron,
-            DedicatedOrderJobParams.JOB_HANDLER.value to dedicatedJobService,
+            DedicatedOrderJobParams.PAGE_SIZE.value to orderJobProperties.pageSize,
+            DedicatedOrderJobParams.MAX_COUNT_PER_EXECUTION.value to orderJobProperties.maxCountPerExecution,
+            DedicatedOrderJobParams.JOB_HANDLER.value to orderJobProperties.jobHandler,
         )))
         .build()
 

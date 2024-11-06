@@ -1,25 +1,35 @@
 package io.scheduler.comparison.quartz.jobs
 
 import io.scheduler.comparison.quartz.domain.OrderStatus
+import io.scheduler.comparison.quartz.jobs.handlers.JobHandler
 import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobData
 import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobMetadata
-import io.scheduler.comparison.quartz.service.DedicatedJobService
 import org.quartz.Job
 import org.quartz.JobDataMap
 import org.quartz.JobExecutionContext
+import org.quartz.JobExecutionException
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.stereotype.Component
 
 /**
  * Dedicated job class instances are used to process only the merchants with specified IDs during initialization.
  */
+@Component
 class DedicatedOrderJob : Job {
+    @Autowired
+    private lateinit var jobHandlers: Map<String, JobHandler<DedicatedOrderJobData, DedicatedOrderJobMetadata>>
 
     private lateinit var orderJobData: DedicatedOrderJobData
     private lateinit var orderJobMetadata: DedicatedOrderJobMetadata
-    private lateinit var jobService: DedicatedJobService
+    private lateinit var jobHandler: JobHandler<DedicatedOrderJobData, DedicatedOrderJobMetadata>
 
     override fun execute(context: JobExecutionContext) {
-        initJobState(context)
-        jobService.executeInternal(orderJobData, orderJobMetadata)
+        try {
+            initJobState(context)
+            jobHandler.executeInternal(orderJobData, orderJobMetadata)
+        } catch (e: Exception) {
+            throw JobExecutionException(e)
+        }
     }
 
     /**
@@ -32,18 +42,20 @@ class DedicatedOrderJob : Job {
      */
     private fun initJobState(context: JobExecutionContext) {
         val jobDataMap = context.jobDetail.jobDataMap
+
+        val jobHandlerKey = jobDataMap.getString(DedicatedOrderJobParams.JOB_HANDLER.value)
+        jobHandler = jobHandlers[jobHandlerKey]
+            ?: throw IllegalArgumentException("Unsupported jobHandler=${jobHandlerKey}, " +
+                    "available options: ${jobHandlers.keys}")
         orderJobData = buildJobData(jobDataMap)
         orderJobMetadata = buildJobMetadata(jobDataMap)
-
-        jobService = jobDataMap[DedicatedOrderJobParams.JOB_HANDLER.value] as? DedicatedJobService
-            ?: throw IllegalArgumentException("jobService of invalid type provided")
     }
 
     private fun buildJobData(jobDataMap: JobDataMap)
         = @Suppress("UNCHECKED_CAST") (DedicatedOrderJobData(
-        merchantIds = jobDataMap[DedicatedOrderJobParams.MERCHANT_IDS.value] as? Set<Long>
+        merchantIds = (jobDataMap[DedicatedOrderJobParams.MERCHANT_IDS.value] as? List<Long>)?.toSet()
             ?: throw IllegalArgumentException("merchantIds of invalid types"),
-        orderStatuses = jobDataMap[DedicatedOrderJobParams.ORDER_STATUSES.value] as? Set<OrderStatus>
+        orderStatuses = (jobDataMap[DedicatedOrderJobParams.ORDER_STATUSES.value] as? List<OrderStatus>)?.toSet()
             ?: throw IllegalArgumentException("orderStatuses of invalid types"),
     ))
 
@@ -51,6 +63,8 @@ class DedicatedOrderJob : Job {
         = DedicatedOrderJobMetadata(
         jobName = jobDataMap.getString(DedicatedOrderJobParams.JOB_NAME.value),
         jobCron = jobDataMap.getString(DedicatedOrderJobParams.JOB_CRON.value),
+        maxCountPerExecution = jobDataMap.getLong(DedicatedOrderJobParams.MAX_COUNT_PER_EXECUTION.value),
+        pageSize = jobDataMap.getLong(DedicatedOrderJobParams.PAGE_SIZE.value),
     )
 
 }

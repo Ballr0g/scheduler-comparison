@@ -1,0 +1,39 @@
+databaseChangeLog:
+  - changeSet:
+      id: '1.1.0-00-0'
+      author: 'ballr0g'
+      comment: 'Create table order_refunds'
+      changes:
+        - createTable:
+            tableName: order_refunds
+            schemaName: scheduler_quartz
+            remarks: ''
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  remarks: 'Unique id of the refund entry.'
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: order_id
+                  type: uuid
+                  remarks: 'Id of the order refunded.'
+                  constraints:
+                    nullable: false
+              - column:
+                  name: merchant_id
+                  type: bigint
+                  remarks: 'Merchant this refund is associated with'
+                  constraints:
+                    foreignKeyName: fk_scheduler_quartz_order_refunds_merchant_id
+                    referencedTableSchemaName: scheduler_quartz
+                    referencedTableName: merchants
+                    referencedColumnNames: id
+              - column:
+                  name: eligible_for_refund
+                  type: boolean
+                  remarks: 'Marks if this order can be refunded'
+                  constraints:
+                    nullable: false

@@ -11,6 +11,8 @@ enum class DedicatedOrderJobParams(
     MERCHANT_IDS("merchantIds"),
     ORDER_STATUSES("orderStatuses"),
     JOB_CRON("cron"),
+    PAGE_SIZE("pageSize"),
+    MAX_COUNT_PER_EXECUTION("maxCountPerExecution"),
     JOB_HANDLER("jobHandler"),
 }
 
@@ -25,5 +27,7 @@ enum class CommonOrderJobParams(
     EXCLUDED_MERCHANT_IDS("excludedMerchantIds"),
     ORDER_STATUSES("orderStatuses"),
     JOB_CRON("cron"),
+    PAGE_SIZE("pageSize"),
+    MAX_COUNT_PER_EXECUTION("maxCountPerExecution"),
     JOB_HANDLER("jobHandler"),
 }

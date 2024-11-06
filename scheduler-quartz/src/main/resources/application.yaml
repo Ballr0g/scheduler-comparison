@@ -11,6 +11,12 @@ spring:
   profiles:
     active:
       - ${SPRING_PROFILE_NAME:dev}
+      # - persistent
+      - ram
+      # - streaming
+      - pagination
+      # - clustering
+      - standalone
   quartz:
     auto-startup: true
     scheduler-name: "Demo quartz scheduler"
@@ -41,19 +47,62 @@ spring:
       bootstrap-servers: localhost:29092
       client-id: scheduler-comparison-quartz-1
 
+kafka:
+  topics:
+    notification-platform: order-statuses-quartz.1
+    loca-lola-refunds: loca-lola-refunds-quartz.1
+
 scheduler:
   jobs:
     dedicated-merchant-jobs:
-      - name: "Big Merchants"
-        merchant-ids: [4, 5]
+      - name: "Loca-Lola failure refunds"
+        job-handler: locaLolaDedicatedJobHandler
+        merchant-ids: [4]
+        order-statuses: [FAILED]
+        cron: "0 */1 * * * ?"
+        # Since this action does not intersect with the other flow, it can be executed concurrently.
+        ignored-by-common: false
+        max-count-per-execution: 30
+        page-size: 10
+      - name: "WildFruit handler"
+        job-handler: wildFruitDedicatedJobHandler
+        merchant-ids: [5]
         order-statuses: [PAID, DELIVERED, FAILED, CANCELLED]
         cron: "0 */1 * * * ?"
-      - name: "Loca-Lola cancellations"
-        merchant-ids: [4]
-        order-statuses: [CANCELLED]
-        cron: "0 */1 * * * ?"
-        ignored-by-common: false
+        max-count-per-execution: 30
+        page-size: 10
     common-merchant-jobs:
       - name: "default"
+        job-handler: commonJobHandler
         order-statuses: [PAID, DELIVERED, FAILED, CANCELLED]
         cron: "0 */1 * * * ?"
+        max-count-per-execution: 30
+        page-size: 10
+
+---
+spring:
+  config:
+    activate:
+      on-profile: ram
+
+  quartz:
+    job-store-type: memory
+    jdbc:
+      initialize-schema: never
+
+---
+spring:
+  config:
+    activate:
+      on-profile: persistent
+
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: always
+    properties:
+      org:
+        quartz:
+          jobStore:
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+            tablePrefix: QRTZ_

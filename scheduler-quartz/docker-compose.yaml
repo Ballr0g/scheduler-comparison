@@ -48,6 +48,7 @@ services:
 
       echo -e 'Creating kafka topics...'
       kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic order-statuses-quartz.1 --replication-factor 1 --partitions 1
+      kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic loca-lola-refunds-quartz.1 --replication-factor 1 --partitions 1
 
       echo -e 'Available topics after setup:'
       kafka-topics --bootstrap-server kafka:9092 --list

@@ -11,6 +11,7 @@ version = "0.0.1-SNAPSHOT"
 val liquibaseVersion: String by project
 val postgresVersion: String by project
 val kotlinLoggingVersion: String by project
+val jacksonJsr310Version: String by project
 
 java {
     toolchain {
@@ -27,6 +28,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-quartz")
     // Spring Boot starter JDBC.
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    // Spring Kafka.
+    implementation("org.springframework.kafka:spring-kafka")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     // Liquibase.
     implementation("org.liquibase:liquibase-core:${liquibaseVersion}")
@@ -34,6 +37,9 @@ dependencies {
     implementation("org.postgresql:postgresql:${postgresVersion}")
     // Kotlin logging.
     implementation("io.github.oshai:kotlin-logging:${kotlinLoggingVersion}")
+    // Jackson support for Java LocalDateTime
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonJsr310Version}")
+    implementation("org.hibernate.validator:hibernate-validator")
 
 
     // --> Test Implementation Dependencies <--
