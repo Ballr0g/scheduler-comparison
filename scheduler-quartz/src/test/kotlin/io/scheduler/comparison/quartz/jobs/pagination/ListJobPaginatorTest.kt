@@ -3,7 +3,7 @@ package io.scheduler.comparison.quartz.jobs.pagination
 import io.scheduler.comparison.quartz.domain.OperationOnOrder
 import io.scheduler.comparison.quartz.domain.OrderOperationStatus
 import io.scheduler.comparison.quartz.domain.OrderStatus
-import io.scheduler.comparison.quartz.jobs.pagination.impl.CommonJobPaginator
+import io.scheduler.comparison.quartz.jobs.pagination.impl.ListJobPaginator
 import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobData
 import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobMetadata
 import org.junit.jupiter.api.Assertions.*
@@ -17,15 +17,15 @@ import java.util.*
 import kotlin.NoSuchElementException
 
 
-class CommonJobPaginatorTest {
+class ListJobPaginatorTest {
 
     private companion object {
-        val testDedicatedOrderJobData = CommonOrderJobData(
+        val testCommonOrderJobData = CommonOrderJobData(
             excludedMerchantIds = setOf(4, 5),
             orderStatuses = setOf(OrderStatus.PAID, OrderStatus.FAILED, OrderStatus.CANCELLED, OrderStatus.DELIVERED)
         )
 
-        val testDedicatedOrderJobMetadata = CommonOrderJobMetadata(
+        val testCommonOrderJobMetadata = CommonOrderJobMetadata(
             jobName = "test-job",
             jobCron = "0 */1 * * * ?",
             pageSize = 1,
@@ -56,94 +56,94 @@ class CommonJobPaginatorTest {
     }
 
     @Test
-    fun `Empty DedicatedJobPaginator hasNext() returns false`() {
+    fun `Empty ListJobPaginator hasNext() returns false`() {
         // given
-        val commonJobPaginator =
-            CommonJobPaginator(testDedicatedOrderJobData, testDedicatedOrderJobMetadata) { _, _ -> emptyList() }
+        val jobPaginator = ListJobPaginator<CommonOrderJobData, CommonOrderJobMetadata, OperationOnOrder>(
+            testCommonOrderJobData, testCommonOrderJobMetadata) { _, _ -> emptyList() }
 
         // when
         // then
-        assertFalse(commonJobPaginator.hasNext())
+        assertFalse(jobPaginator.hasNext())
     }
 
     @Test
-    fun `Empty DedicatedJobPaginator next() throws NoSuchElementException`() {
+    fun `Empty ListJobPaginator next() throws NoSuchElementException`() {
         // given
-        val commonJobPaginator =
-            CommonJobPaginator(testDedicatedOrderJobData, testDedicatedOrderJobMetadata) { _, _ -> emptyList() }
+        val jobPaginator = ListJobPaginator<CommonOrderJobData, CommonOrderJobMetadata, OperationOnOrder>(
+            testCommonOrderJobData, testCommonOrderJobMetadata) { _, _ -> emptyList() }
 
         // when
         // then
-        assertThrows<NoSuchElementException> { commonJobPaginator.next() }
+        assertThrows<NoSuchElementException> { jobPaginator.next() }
     }
 
     @Test
-    fun `Single page for DedicatedJobPaginator hasNext() returns true on first call`() {
+    fun `Single page for ListJobPaginator hasNext() returns true on first call`() {
         // given
-        val commonJobPaginator = CommonJobPaginator(
-            testDedicatedOrderJobData, testDedicatedOrderJobMetadata) { _, _ -> testOperationsOnOrder }
+        val jobPaginator = ListJobPaginator(
+            testCommonOrderJobData, testCommonOrderJobMetadata) { _, _ -> testOperationsOnOrder }
 
         // when
         // then
-        assertTrue(commonJobPaginator.hasNext())
+        assertTrue(jobPaginator.hasNext())
     }
 
     @Test
-    fun `Multiple pages for DedicatedJobPaginator next() return expected value on first call`() {
+    fun `Multiple pages for ListJobPaginator next() return expected value on first call`() {
         // given
-        val commonJobPaginator = CommonJobPaginator(testDedicatedOrderJobData, testDedicatedOrderJobMetadata)
+        val jobPaginator = ListJobPaginator(testCommonOrderJobData, testCommonOrderJobMetadata)
         { pageSize, _ -> testOperationsOnOrder.take(pageSize.toInt()) }
 
         // when
-        val actualPage = commonJobPaginator.next()
+        val actualPage = jobPaginator.next()
 
         // then
-        assertEquals(testDedicatedOrderJobMetadata.pageSize, actualPage.size.toLong())
+        assertEquals(testCommonOrderJobMetadata.pageSize, actualPage.size.toLong())
         assertEquals(testOperationOnOrder1, actualPage[0])
     }
 
     @Test
-    fun `Multiple pages for DedicatedJobPaginator hasNext() returns true when second page exists`() {
+    fun `Multiple pages for ListJobPaginator hasNext() returns true when second page exists`() {
         // given
         var currentPage = 0
-        val commonJobPaginator = CommonJobPaginator(testDedicatedOrderJobData, testDedicatedOrderJobMetadata)
+        val jobPaginator = ListJobPaginator(testCommonOrderJobData, testCommonOrderJobMetadata)
         { _, _ -> listOf(testOperationsOnOrder[currentPage++]) }
 
         // when
-        commonJobPaginator.next()
+        jobPaginator.next()
 
         // then
-        assertTrue(commonJobPaginator.hasNext())
+        assertTrue(jobPaginator.hasNext())
     }
 
     @Test
-    fun `Multiple pages for DedicatedJobPaginator next() returns expected second page when it exists`() {
+    fun `Multiple pages for ListJobPaginator next() returns expected second page when it exists`() {
         // given
         var currentPage = 0
-        val commonJobPaginator = CommonJobPaginator(testDedicatedOrderJobData, testDedicatedOrderJobMetadata)
+        val jobPaginator = ListJobPaginator(testCommonOrderJobData, testCommonOrderJobMetadata)
         { _, _ -> listOf(testOperationsOnOrder[currentPage++]) }
 
         // when
-        commonJobPaginator.next()
-        val actualSecondPage = commonJobPaginator.next()
+        jobPaginator.next()
+        val actualSecondPage = jobPaginator.next()
 
         // then
-        assertEquals(testDedicatedOrderJobMetadata.pageSize, actualSecondPage.size.toLong())
+        assertEquals(testCommonOrderJobMetadata.pageSize, actualSecondPage.size.toLong())
         assertEquals(testOperationOnOrder2, actualSecondPage[0])
     }
 
     @Test
     fun `Page size does not exceed max entries count when more data available than queried via next()`() {
         // given
-        val jobMetadataExcessivePageSize = testDedicatedOrderJobMetadata.copy(
+        val jobMetadataExcessivePageSize = testCommonOrderJobMetadata.copy(
             pageSize = 2,
             maxCountPerExecution = 1
         )
-        val commonJobPaginator = CommonJobPaginator(testDedicatedOrderJobData, jobMetadataExcessivePageSize)
+        val jobPaginator = ListJobPaginator(testCommonOrderJobData, jobMetadataExcessivePageSize)
         { pageSize, _ -> testOperationsOnOrder.take(pageSize.toInt()) }
 
         // when
-        val actualPage = commonJobPaginator.next()
+        val actualPage = jobPaginator.next()
 
         // then
         assertEquals(jobMetadataExcessivePageSize.maxCountPerExecution, actualPage.size.toLong())

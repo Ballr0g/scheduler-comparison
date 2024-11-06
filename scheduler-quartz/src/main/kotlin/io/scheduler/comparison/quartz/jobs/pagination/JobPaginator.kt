@@ -1,6 +1,8 @@
 package io.scheduler.comparison.quartz.jobs.pagination
 
-interface JobPaginator<T, V, K> : Iterator<List<K>> {
+import io.scheduler.comparison.quartz.jobs.state.PaginatedJobMetadata
+
+interface JobPaginator<out T , out V : PaginatedJobMetadata, K> : Iterator<List<K>> {
 
     val jobData: T
     val jobMetadata: V

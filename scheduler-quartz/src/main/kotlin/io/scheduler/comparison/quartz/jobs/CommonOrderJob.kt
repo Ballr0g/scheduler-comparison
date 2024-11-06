@@ -20,11 +20,11 @@ class CommonOrderJob : Job {
     private lateinit var orderJobMetadata: CommonOrderJobMetadata
     @Transient
     @Autowired
-    private lateinit var jobService: JobHandler<CommonOrderJobData, CommonOrderJobMetadata>
+    private lateinit var jobHandler: JobHandler<CommonOrderJobData, CommonOrderJobMetadata>
 
     override fun execute(context: JobExecutionContext) {
         initJobState(context)
-        jobService.executeInternal(orderJobData, orderJobMetadata)
+        jobHandler.executeInternal(orderJobData, orderJobMetadata)
     }
 
     /**

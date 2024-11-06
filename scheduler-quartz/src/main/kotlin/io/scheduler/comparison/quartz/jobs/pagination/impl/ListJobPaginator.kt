@@ -1,27 +1,25 @@
 package io.scheduler.comparison.quartz.jobs.pagination.impl
 
-import io.scheduler.comparison.quartz.domain.OperationOnOrder
 import io.scheduler.comparison.quartz.jobs.pagination.JobPaginator
-import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobData
-import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobMetadata
+import io.scheduler.comparison.quartz.jobs.state.PaginatedJobMetadata
 import kotlin.math.ceil
 import kotlin.math.min
 
 /**
- * An iterator implementation that uses an extractor function to retrieve its values from a data source.
+ * An iterator implementation that uses an extractor function to retrieve its values from a data source as a List.
  */
-class CommonJobPaginator(
-    override val jobData: CommonOrderJobData,
-    override val jobMetadata: CommonOrderJobMetadata,
-    private val pageExtractor: (pageSize: Long, jobData: CommonOrderJobData) -> List<OperationOnOrder>,
-) : JobPaginator<CommonOrderJobData, CommonOrderJobMetadata, OperationOnOrder> {
+class ListJobPaginator<out T, V : PaginatedJobMetadata, K>(
+    override val jobData: T,
+    override val jobMetadata: V,
+    private val pageExtractor: (pageSize: Long, jobData: T) -> List<K>,
+) : JobPaginator<T, V, K> {
 
     override val pageSize: Long = jobMetadata.pageSize
 
     private var pagesLeft = ceil(jobMetadata.maxCountPerExecution.toDouble() / pageSize).toLong()
     private var elementsLeft = jobMetadata.maxCountPerExecution
     private var elementsQueried = false
-    private var currentPage: List<OperationOnOrder> = mutableListOf()
+    private var currentPage: List<K> = mutableListOf()
 
     /**
      * Reads the next page if max page count hasn't been reached yet. It is guaranteed to return the same
@@ -48,7 +46,7 @@ class CommonJobPaginator(
      * Queries the next page and returns its contents. If hasNext() was called previously, the cached page
      * will be returned.
      */
-    override fun next(): List<OperationOnOrder> {
+    override fun next(): List<K> {
         if (!hasNext()) {
             throw NoSuchElementException()
         }

@@ -3,7 +3,7 @@ package io.scheduler.comparison.quartz.jobs.handlers.impl
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.scheduler.comparison.quartz.domain.OperationOnOrder
 import io.scheduler.comparison.quartz.jobs.handlers.JobHandler
-import io.scheduler.comparison.quartz.jobs.pagination.impl.CommonJobPaginator
+import io.scheduler.comparison.quartz.jobs.pagination.impl.ListJobPaginator
 import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobData
 import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobMetadata
 import io.scheduler.comparison.quartz.messaging.NotificationPlatformSender
@@ -49,7 +49,7 @@ class CommonJobHandler(
 
     private fun createPaginator(orderJobData: CommonOrderJobData,
                                 orderJobMetadata: CommonOrderJobMetadata
-    ) = CommonJobPaginator(
+    ) = ListJobPaginator(
         jobData = orderJobData,
         jobMetadata = orderJobMetadata,
         pageExtractor = operationOnOrderRepository::readUnprocessedWithReadCountIncrement
