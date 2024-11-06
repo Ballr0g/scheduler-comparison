@@ -18,8 +18,8 @@ because our notorious marketplace master system is a spooky legacy monolith work
 operation type and merchant id every minute and send the results to a Kafka topic
 (later consumed by the notification platform).
 
-We also need to send the Loca-Lola cancellations in the FAILED status to yet another topic in case they have
-the ELIGIBLE_FOR_REFUND flag set to true in the order_refunds table.
+**Loca-Lola failures**: We also need to send the operations in the FAILED status to yet another topic in case they have
+the ELIGIBLE_FOR_REFUND flag set to true in the order_refunds table. read_count is not affected by such operations.
 
 **WildFruit flow** requires a customization in comparison to general flow: it should set the operations in the CANCELLED status to
 the ERROR status because we aren't supposed to handle cancellations but our spooky monolith keeps putting them in the
