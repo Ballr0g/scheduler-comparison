@@ -8,10 +8,12 @@ import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobData
 import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobMetadata
 import io.scheduler.comparison.quartz.messaging.LocaLolaRefundsSender
 import io.scheduler.comparison.quartz.repositories.LocaLolaFailuresRepository
+import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
 @Component
+@Profile("pagination")
 class LocaLolaDedicatedJobHandler(
     private val locaLolaFailuresRepository: LocaLolaFailuresRepository,
     private val locaLolaRefundsSender: LocaLolaRefundsSender,

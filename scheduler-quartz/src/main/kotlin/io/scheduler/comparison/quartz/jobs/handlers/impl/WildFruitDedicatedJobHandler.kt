@@ -9,10 +9,12 @@ import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobData
 import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobMetadata
 import io.scheduler.comparison.quartz.messaging.NotificationPlatformSender
 import io.scheduler.comparison.quartz.repositories.WildFruitOperationOnOrderRepository
+import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
 @Component
+@Profile("pagination")
 class WildFruitDedicatedJobHandler(
     private val operationOnOrderRepository: WildFruitOperationOnOrderRepository,
     private val notificationPlatformSender: NotificationPlatformSender,

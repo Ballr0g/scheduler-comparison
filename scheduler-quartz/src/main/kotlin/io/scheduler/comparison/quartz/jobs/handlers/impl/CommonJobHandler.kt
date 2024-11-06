@@ -8,10 +8,12 @@ import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobData
 import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobMetadata
 import io.scheduler.comparison.quartz.messaging.NotificationPlatformSender
 import io.scheduler.comparison.quartz.repositories.CommonOperationOnOrderRepository
+import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
 @Component
+@Profile("pagination")
 class CommonJobHandler(
     private val operationOnOrderRepository: CommonOperationOnOrderRepository,
     private val notificationPlatformSender: NotificationPlatformSender,
