@@ -19,7 +19,7 @@ class CommonOperationOnOrderRepository(
 
     private companion object {
         @Language("PostgreSQL")
-        const val READ_UNPROCESSED_ORDER_OPERATIONS_SQL =  """
+        const val READ_UNPROCESSED_ORDER_OPERATIONS_FOR_UPDATE_SQL =  """
                 SELECT id, order_id, order_statuses.merchant_id, status_change_time,
                     operation_status AS order_operation_status, record_read_count, order_status
                 FROM scheduler_quartz.order_statuses
@@ -56,7 +56,7 @@ class CommonOperationOnOrderRepository(
         maxPageSize: Long,
         orderJobData: CommonOrderJobData
     ): List<OperationOnOrder> {
-        val updatedOrderStatuses = jdbcClient.sql(READ_UNPROCESSED_ORDER_OPERATIONS_SQL)
+        val updatedOrderStatuses = jdbcClient.sql(READ_UNPROCESSED_ORDER_OPERATIONS_FOR_UPDATE_SQL)
             .param("maxPageSize", maxPageSize)
             .param("excludedMerchantIds", orderJobData.excludedMerchantIds)
             .param("orderStatuses", orderJobData.orderStatuses.asSequence().map { it.value }.toSet())

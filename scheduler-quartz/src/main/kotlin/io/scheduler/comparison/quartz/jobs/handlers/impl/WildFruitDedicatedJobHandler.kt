@@ -8,12 +8,12 @@ import io.scheduler.comparison.quartz.jobs.pagination.impl.listJobPaginator
 import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobData
 import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobMetadata
 import io.scheduler.comparison.quartz.messaging.NotificationPlatformSender
-import io.scheduler.comparison.quartz.repositories.DedicatedOperationOnOrderRepository
+import io.scheduler.comparison.quartz.repositories.WildFruitOperationOnOrderRepository
 import org.springframework.stereotype.Component
 
 @Component
 class WildFruitDedicatedJobHandler(
-    private val operationOnOrderRepository: DedicatedOperationOnOrderRepository,
+    private val operationOnOrderRepository: WildFruitOperationOnOrderRepository,
     private val notificationPlatformSender: NotificationPlatformSender,
 ) : JobHandler<DedicatedOrderJobData, DedicatedOrderJobMetadata> {
 

@@ -13,6 +13,7 @@ enum class DedicatedOrderJobParams(
     JOB_CRON("cron"),
     PAGE_SIZE("pageSize"),
     MAX_COUNT_PER_EXECUTION("maxCountPerExecution"),
+    JOB_HANDLER("jobHandler"),
 }
 
 /**
@@ -27,5 +28,6 @@ enum class CommonOrderJobParams(
     ORDER_STATUSES("orderStatuses"),
     JOB_CRON("cron"),
     PAGE_SIZE("pageSize"),
-    MAX_COUNT_PER_EXECUTION("maxCountPerExecution")
+    MAX_COUNT_PER_EXECUTION("maxCountPerExecution"),
+    JOB_HANDLER("jobHandler"),
 }

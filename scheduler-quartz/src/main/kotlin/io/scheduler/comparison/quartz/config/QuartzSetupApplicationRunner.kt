@@ -61,6 +61,7 @@ class QuartzSetupApplicationRunner(
             CommonOrderJobParams.JOB_CRON.value to orderJobProperties.cron,
             CommonOrderJobParams.PAGE_SIZE.value to orderJobProperties.pageSize,
             CommonOrderJobParams.MAX_COUNT_PER_EXECUTION.value to orderJobProperties.maxCountPerExecution,
+            CommonOrderJobParams.JOB_HANDLER.value to orderJobProperties.jobHandler,
         )))
         .build()
 
@@ -98,6 +99,7 @@ class QuartzSetupApplicationRunner(
             DedicatedOrderJobParams.JOB_CRON.value to orderJobProperties.cron,
             DedicatedOrderJobParams.PAGE_SIZE.value to orderJobProperties.pageSize,
             DedicatedOrderJobParams.MAX_COUNT_PER_EXECUTION.value to orderJobProperties.maxCountPerExecution,
+            DedicatedOrderJobParams.JOB_HANDLER.value to orderJobProperties.jobHandler,
         )))
         .build()
 

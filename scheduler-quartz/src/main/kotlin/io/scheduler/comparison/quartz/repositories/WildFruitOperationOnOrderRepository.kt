@@ -13,7 +13,7 @@ import java.time.LocalDateTime
 
 // Todo: queryForStream with Stream item processing (pageSize == fetchSize), maxCount == LIMIT.
 @Repository
-class DedicatedOperationOnOrderRepository(
+class WildFruitOperationOnOrderRepository(
     private val jdbcClient: JdbcClient
 ) {
 

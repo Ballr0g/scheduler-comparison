@@ -15,11 +15,11 @@ import org.springframework.stereotype.Component
  */
 @Component
 class DedicatedOrderJob : Job {
+    @Autowired
+    private lateinit var jobHandlers: Map<String, JobHandler<DedicatedOrderJobData, DedicatedOrderJobMetadata>>
 
     private lateinit var orderJobData: DedicatedOrderJobData
     private lateinit var orderJobMetadata: DedicatedOrderJobMetadata
-    @Transient
-    @Autowired
     private lateinit var jobHandler: JobHandler<DedicatedOrderJobData, DedicatedOrderJobMetadata>
 
     override fun execute(context: JobExecutionContext) {
@@ -37,6 +37,11 @@ class DedicatedOrderJob : Job {
      */
     private fun initJobState(context: JobExecutionContext) {
         val jobDataMap = context.jobDetail.jobDataMap
+
+        val jobHandlerKey = jobDataMap.getString(DedicatedOrderJobParams.JOB_HANDLER.value)
+        jobHandler = jobHandlers[jobHandlerKey]
+            ?: throw IllegalArgumentException("Unsupported jobHandler=${jobHandlerKey}, " +
+                    "available options: ${jobHandlers.keys}")
         orderJobData = buildJobData(jobDataMap)
         orderJobMetadata = buildJobMetadata(jobDataMap)
     }
