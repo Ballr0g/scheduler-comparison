@@ -13,6 +13,10 @@ spring:
       - ${SPRING_PROFILE_NAME:dev}
       # - persistent
       - ram
+      # - streaming
+      - pagination
+      # - clustering
+      - standalone
   quartz:
     auto-startup: true
     scheduler-name: "Demo quartz scheduler"

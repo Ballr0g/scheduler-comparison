@@ -17,19 +17,51 @@ class ApplicationProfileChecker(
     }
 
     override fun onApplicationEvent(event: ContextRefreshedEvent) {
+        log.info { "Starting scheduler quartz for comparison with profiles: ${environment.activeProfiles.toList()}" }
         checkJobStorageProfiles()
+        checkPageHandlingModeProfiles()
+        checkSchedulerClusteringProfiles()
     }
 
     fun checkJobStorageProfiles() {
-        log.info { "Active profiles$$ ${environment.activeProfiles.toList()}" }
-        check (environment.acceptsProfiles(Profiles.of("!(persistent & ram)"))) {
+        check (environment.acceptsProfiles(Profiles.of("!(ram & persistent)"))) {
             throw IllegalStateException("Both \"ram\" and \"persistent\" profiles cannot be present at the same time, "
                     + "choose \"ram\" for RAM Quartz JobStore or \"persistent\" for JDBC JobStore.")
         }
 
-        check (environment.acceptsProfiles(Profiles.of("persistent | ram"))) {
+        check (environment.acceptsProfiles(Profiles.of("ram | persistent"))) {
             throw IllegalStateException("At least one profile (either \"ram\" or \"persistent\") must be present "
                     + "because this defines the behavior of Quartz (RAM JobStore or JDBC JobStore).")
+        }
+    }
+
+    fun checkPageHandlingModeProfiles() {
+        check (environment.acceptsProfiles(Profiles.of("!(pagination & streaming)"))) {
+            throw IllegalStateException("Both \"pagination\" and \"streaming\" profiles cannot be present at the same time, "
+                    + "choose \"pagination\" for List-based entry handling or \"streaming\" for Stream-based entry handling.")
+        }
+
+        check (environment.acceptsProfiles(Profiles.of("pagination | streaming"))) {
+            throw IllegalStateException("At least one profile (either \"pagination\" or \"streaming\") must be present "
+                    + "because this defines the behavior of pagination (List-based or Stream-based).")
+        }
+    }
+
+    fun checkSchedulerClusteringProfiles() {
+        check(environment.acceptsProfiles(Profiles.of("!(clustering & persistent)"))) {
+            throw IllegalStateException("\"clustering\" profile requires \"persistent\" because a persistent "
+                    + "datasource is mandatory for running scheduling in cluster mode")
+        }
+
+        check (environment.acceptsProfiles(Profiles.of("!(standalone & clustering)"))) {
+            throw IllegalStateException("Both \"standalone\" and \"clustering\" profiles cannot be present at the same time, "
+                    + "choose \"standalone\" running the scheduling using a single replica or " +
+                    " \"clustering\" for support of multiple instances.")
+        }
+
+        check (environment.acceptsProfiles(Profiles.of("standalone | clustering"))) {
+            throw IllegalStateException("At least one profile (either \"standalone\" or \"clustering\") must be present "
+                    + "because this defines the behavior of replicas (single replica or multiple instances in a cluster).")
         }
     }
 
