@@ -87,7 +87,6 @@ class QuartzSetupApplicationRunner(
         scheduler.scheduleJob(dedicatedOrderJobDetails, dedicatedOrderTrigger)
     }
 
-    // Todo: customize the job handler instead of the job itself
     private fun buildDedicatedOrderJobDetails(
         orderJobProperties: StaticOrderJobProperties.StaticDedicatedMerchantsOrderJob
     ) = JobBuilder.newJob(DedicatedOrderJob::class.java)
