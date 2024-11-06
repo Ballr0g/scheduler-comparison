@@ -11,6 +11,8 @@ spring:
   profiles:
     active:
       - ${SPRING_PROFILE_NAME:dev}
+      # - persistent
+      - ram
   quartz:
     auto-startup: true
     scheduler-name: "Demo quartz scheduler"

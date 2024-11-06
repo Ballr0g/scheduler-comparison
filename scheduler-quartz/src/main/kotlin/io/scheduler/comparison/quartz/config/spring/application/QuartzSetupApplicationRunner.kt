@@ -1,4 +1,4 @@
-package io.scheduler.comparison.quartz.config
+package io.scheduler.comparison.quartz.config.spring.application
 
 import io.scheduler.comparison.quartz.config.properties.StaticOrderJobProperties
 import io.scheduler.comparison.quartz.jobs.CommonOrderJob
