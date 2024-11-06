@@ -70,8 +70,10 @@ class CommonOperationOnOrderRepository(
     }
 
     fun markOrderOperationsAsProcessed(orderIds: Set<Long>)
-        = jdbcClient.sql(CHANGE_ORDER_OPERATION_STATUSES_SQL)
-            .param("orderOperationStatus", "SENT_TO_NOTIFIER")
-            .param("ids", orderIds)
-            .update()
+        = if (orderIds.isNotEmpty()) {
+            jdbcClient.sql(CHANGE_ORDER_OPERATION_STATUSES_SQL)
+                .param("orderOperationStatus", "SENT_TO_NOTIFIER")
+                .param("ids", orderIds)
+                .update()
+    } else 0
 }
