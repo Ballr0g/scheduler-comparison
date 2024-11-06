@@ -39,6 +39,7 @@ dependencies {
     implementation("io.github.oshai:kotlin-logging:${kotlinLoggingVersion}")
     // Jackson support for Java LocalDateTime
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonJsr310Version}")
+    implementation("org.hibernate.validator:hibernate-validator")
 
 
     // --> Test Implementation Dependencies <--
