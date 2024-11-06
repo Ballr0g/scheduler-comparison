@@ -1,22 +1,26 @@
 package io.scheduler.comparison.quartz.jobs
 
 import io.scheduler.comparison.quartz.domain.OrderStatus
+import io.scheduler.comparison.quartz.jobs.handlers.JobHandler
 import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobData
 import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobMetadata
-import io.scheduler.comparison.quartz.service.DedicatedJobService
 import org.quartz.Job
 import org.quartz.JobDataMap
 import org.quartz.JobExecutionContext
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.stereotype.Component
 
 /**
  * Dedicated job class instances are used to process only the merchants with specified IDs during initialization.
  */
-@Suppress("UNUSED")
+@Component
 class DedicatedOrderJob : Job {
 
     private lateinit var orderJobData: DedicatedOrderJobData
     private lateinit var orderJobMetadata: DedicatedOrderJobMetadata
-    private lateinit var jobService: DedicatedJobService
+    @Transient
+    @Autowired
+    private lateinit var jobService: JobHandler<DedicatedOrderJobData, DedicatedOrderJobMetadata>
 
     override fun execute(context: JobExecutionContext) {
         initJobState(context)
@@ -35,16 +39,13 @@ class DedicatedOrderJob : Job {
         val jobDataMap = context.jobDetail.jobDataMap
         orderJobData = buildJobData(jobDataMap)
         orderJobMetadata = buildJobMetadata(jobDataMap)
-
-        jobService = jobDataMap[DedicatedOrderJobParams.JOB_HANDLER.value] as? DedicatedJobService
-            ?: throw IllegalArgumentException("jobService of invalid type provided")
     }
 
     private fun buildJobData(jobDataMap: JobDataMap)
         = @Suppress("UNCHECKED_CAST") (DedicatedOrderJobData(
-        merchantIds = jobDataMap[DedicatedOrderJobParams.MERCHANT_IDS.value] as? Set<Long>
+        merchantIds = (jobDataMap[DedicatedOrderJobParams.MERCHANT_IDS.value] as? List<Long>)?.toSet()
             ?: throw IllegalArgumentException("merchantIds of invalid types"),
-        orderStatuses = jobDataMap[DedicatedOrderJobParams.ORDER_STATUSES.value] as? Set<OrderStatus>
+        orderStatuses = (jobDataMap[DedicatedOrderJobParams.ORDER_STATUSES.value] as? List<OrderStatus>)?.toSet()
             ?: throw IllegalArgumentException("orderStatuses of invalid types"),
     ))
 

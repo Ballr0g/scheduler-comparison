@@ -47,7 +47,7 @@ scheduler:
   jobs:
     dedicated-merchant-jobs:
       - name: "Loca-Lola failure refunds"
-        job-class: io.scheduler.comparison.quartz.jobs.DedicatedOrderJob
+        job-handler: dedicatedJobHandler
         merchant-ids: [4]
         order-statuses: [FAILED]
         cron: "0 */1 * * * ?"
@@ -56,14 +56,45 @@ scheduler:
         max-count-per-execution: 30
         page-size: 10
       - name: "WildFruits handler"
-        job-class: io.scheduler.comparison.quartz.jobs.DedicatedOrderJob
+        job-handler: dedicatedJobHandler
         merchant-ids: [5]
         order-statuses: [PAID, DELIVERED, FAILED, CANCELLED]
         cron: "0 */1 * * * ?"
         max-count-per-execution: 30
+        # Todo: Add validation of max size according to max IN param
         page-size: 10
     common-merchant-jobs:
       - name: "default"
-        job-class: io.scheduler.comparison.quartz.jobs.CommonOrderJob
+        job-handler: commonJobHandler
         order-statuses: [PAID, DELIVERED, FAILED, CANCELLED]
         cron: "0 */1 * * * ?"
+        max-count-per-execution: 30
+        page-size: 10
+
+---
+spring:
+  config:
+    activate:
+      on-profile: ram
+
+  quartz:
+    job-store-type: memory
+    jdbc:
+      initialize-schema: never
+
+---
+spring:
+  config:
+    activate:
+      on-profile: persistent
+
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: always
+    properties:
+      org:
+        quartz:
+          jobStore:
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+            tablePrefix: QRTZ_

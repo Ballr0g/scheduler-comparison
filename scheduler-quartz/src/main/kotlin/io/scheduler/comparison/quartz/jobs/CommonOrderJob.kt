@@ -1,22 +1,26 @@
 package io.scheduler.comparison.quartz.jobs
 
 import io.scheduler.comparison.quartz.domain.OrderStatus
+import io.scheduler.comparison.quartz.jobs.handlers.JobHandler
 import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobData
 import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobMetadata
-import io.scheduler.comparison.quartz.service.CommonJobService
 import org.quartz.Job
 import org.quartz.JobDataMap
 import org.quartz.JobExecutionContext
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.stereotype.Component
 
 /**
  * A general-purpose job execution class that works with all merchants except for those used for dedicated jobs.
  */
-@Suppress("UNUSED")
+@Component
 class CommonOrderJob : Job {
 
     private lateinit var orderJobData: CommonOrderJobData
     private lateinit var orderJobMetadata: CommonOrderJobMetadata
-    private lateinit var jobService: CommonJobService
+    @Transient
+    @Autowired
+    private lateinit var jobService: JobHandler<CommonOrderJobData, CommonOrderJobMetadata>
 
     override fun execute(context: JobExecutionContext) {
         initJobState(context)
@@ -35,16 +39,13 @@ class CommonOrderJob : Job {
         val jobDataMap = context.jobDetail.jobDataMap
         orderJobData = buildJobData(jobDataMap)
         orderJobMetadata = buildJobMetadata(jobDataMap)
-
-        jobService = jobDataMap[CommonOrderJobParams.JOB_HANDLER.value] as? CommonJobService
-            ?: throw IllegalArgumentException("jobService of invalid type provided")
     }
 
     private fun buildJobData(jobDataMap: JobDataMap)
             = @Suppress("UNCHECKED_CAST") (CommonOrderJobData(
-        excludedMerchantIds = jobDataMap[CommonOrderJobParams.EXCLUDED_MERCHANT_IDS.value] as? Set<Long>
+        excludedMerchantIds = (jobDataMap[CommonOrderJobParams.EXCLUDED_MERCHANT_IDS.value] as? List<Long>)?.toSet()
             ?: throw IllegalArgumentException("merchantIds of invalid types"),
-        orderStatuses = jobDataMap[CommonOrderJobParams.ORDER_STATUSES.value] as? Set<OrderStatus>
+        orderStatuses = (jobDataMap[CommonOrderJobParams.ORDER_STATUSES.value] as? List<OrderStatus>)?.toSet()
             ?: throw IllegalArgumentException("orderStatuses of invalid types"),
     ))
 
@@ -52,6 +53,8 @@ class CommonOrderJob : Job {
             = CommonOrderJobMetadata(
         jobName = jobDataMap.getString(CommonOrderJobParams.JOB_NAME.value),
         jobCron = jobDataMap.getString(CommonOrderJobParams.JOB_CRON.value),
+        pageSize = jobDataMap.getLong(CommonOrderJobParams.PAGE_SIZE.value),
+        maxCountPerExecution = jobDataMap.getLong(CommonOrderJobParams.MAX_COUNT_PER_EXECUTION.value),
     )
 
 }

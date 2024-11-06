@@ -17,7 +17,9 @@ class NotificationPlatformSender(
         val log = KotlinLogging.logger {}
     }
 
+    // Todo: throw custom exception if Kafka gives up
     fun sendAllOperationsOnOrder(operations: List<OperationOnOrder>) {
+        // Todo: match batch size of actual Kafka batch on the KafkaTemplate
         CompletableFuture.allOf(*operations.asSequence()
             .map{ kafkaTemplate.send(kafkaProperties.template.defaultTopic, it) }
             .toList().toTypedArray()

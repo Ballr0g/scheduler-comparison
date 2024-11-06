@@ -1,19 +1,20 @@
-package io.scheduler.comparison.quartz.jobs.pagination
+package io.scheduler.comparison.quartz.jobs.pagination.impl
 
 import io.scheduler.comparison.quartz.domain.OperationOnOrder
-import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobData
-import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobMetadata
+import io.scheduler.comparison.quartz.jobs.pagination.JobPaginator
+import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobData
+import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobMetadata
 import kotlin.math.ceil
 import kotlin.math.min
 
 /**
  * An iterator implementation that uses an extractor function to retrieve its values from a data source.
  */
-class DedicatedJobPaginator(
-    override val jobData: DedicatedOrderJobData,
-    override val jobMetadata: DedicatedOrderJobMetadata,
-    private val pageExtractor: (pageSize: Long, jobData: DedicatedOrderJobData) -> List<OperationOnOrder>,
-) : JobPaginator<DedicatedOrderJobData, DedicatedOrderJobMetadata, OperationOnOrder> {
+class CommonJobPaginator(
+    override val jobData: CommonOrderJobData,
+    override val jobMetadata: CommonOrderJobMetadata,
+    private val pageExtractor: (pageSize: Long, jobData: CommonOrderJobData) -> List<OperationOnOrder>,
+) : JobPaginator<CommonOrderJobData, CommonOrderJobMetadata, OperationOnOrder> {
 
     override val pageSize: Long = jobMetadata.pageSize
 
