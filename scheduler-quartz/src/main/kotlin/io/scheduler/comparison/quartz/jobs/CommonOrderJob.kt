@@ -7,6 +7,7 @@ import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobMetadata
 import org.quartz.Job
 import org.quartz.JobDataMap
 import org.quartz.JobExecutionContext
+import org.quartz.JobExecutionException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
@@ -23,8 +24,12 @@ class CommonOrderJob : Job {
     private lateinit var jobHandler: JobHandler<CommonOrderJobData, CommonOrderJobMetadata>
 
     override fun execute(context: JobExecutionContext) {
-        initJobState(context)
-        jobHandler.executeInternal(orderJobData, orderJobMetadata)
+        try {
+            initJobState(context)
+            jobHandler.executeInternal(orderJobData, orderJobMetadata)
+        } catch (e: Exception) {
+            throw JobExecutionException(e)
+        }
     }
 
     /**
