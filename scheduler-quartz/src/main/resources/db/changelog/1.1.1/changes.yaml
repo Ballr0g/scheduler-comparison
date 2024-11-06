@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: '1.1.1-00-0'
+      author: 'ballr0g'
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            encoding: utf8
+            path: 'scripts/MP-003-fix_wildfruit_grammar.sql'
+            relativeToChangelogFile: true
