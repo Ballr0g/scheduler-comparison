@@ -14,8 +14,8 @@ data class StaticOrderJobProperties(
         val orderStatuses: List<OrderStatus>,
         val jobHandler: String = "commonJobHandler",
         val cron: String,
-        val pageSize: Long = -1,
-        val maxCountPerExecution: Long = -1,
+        val pageSize: Long,
+        val maxCountPerExecution: Long,
     )
 
     data class StaticDedicatedMerchantsOrderJob(
@@ -25,8 +25,8 @@ data class StaticOrderJobProperties(
         val cron: String,
         val ignoredByCommon: Boolean = true,
         val jobHandler: String = "dedicatedJobHandler",
-        val pageSize: Long = -1,
-        val maxCountPerExecution: Long = -1,
+        val pageSize: Long,
+        val maxCountPerExecution: Long,
     )
 
 }
