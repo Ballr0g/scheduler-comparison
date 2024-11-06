@@ -2,32 +2,31 @@ package io.scheduler.comparison.quartz.jobs.handlers.impl
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.scheduler.comparison.quartz.domain.OperationOnOrder
+import io.scheduler.comparison.quartz.domain.OrderStatus
 import io.scheduler.comparison.quartz.jobs.handlers.JobHandler
 import io.scheduler.comparison.quartz.jobs.pagination.impl.listJobPaginator
-import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobData
-import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobMetadata
+import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobData
+import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobMetadata
 import io.scheduler.comparison.quartz.messaging.NotificationPlatformSender
-import io.scheduler.comparison.quartz.repositories.CommonOperationOnOrderRepository
+import io.scheduler.comparison.quartz.repositories.DedicatedOperationOnOrderRepository
 import org.springframework.stereotype.Component
-import org.springframework.transaction.annotation.Transactional
 
 @Component
-class CommonJobHandler(
-    private val operationOnOrderRepository: CommonOperationOnOrderRepository,
+class WildFruitDedicatedJobHandler(
+    private val operationOnOrderRepository: DedicatedOperationOnOrderRepository,
     private val notificationPlatformSender: NotificationPlatformSender,
-) : JobHandler<CommonOrderJobData, CommonOrderJobMetadata> {
+) : JobHandler<DedicatedOrderJobData, DedicatedOrderJobMetadata> {
 
     private companion object {
         private val log = KotlinLogging.logger {}
     }
 
-    @Transactional
     override fun executeInternal(
-        orderJobData: CommonOrderJobData,
-        orderJobMetadata: CommonOrderJobMetadata
+        orderJobData: DedicatedOrderJobData,
+        orderJobMetadata: DedicatedOrderJobMetadata
     ) {
         log.info { "[${orderJobMetadata.jobName}] Started: " +
-                "excludedMerchantIds=${orderJobData.excludedMerchantIds}, orderStatuses=${orderJobData.orderStatuses}" }
+                "merchantIds=${orderJobData.merchantIds}, orderStatuses=${orderJobData.orderStatuses}" }
 
         val paginator = listJobPaginator(
             jobData = orderJobData,
@@ -45,11 +44,26 @@ class CommonJobHandler(
     }
 
     private fun handleNextPage(page: List<OperationOnOrder>) {
-        notificationPlatformSender.sendAllOperationsOnOrder(page)
-        val updatedIds = page.asSequence()
+        val pageCancellationsExcluded = filteredOutCancellations(page)
+        notificationPlatformSender.sendAllOperationsOnOrder(pageCancellationsExcluded)
+
+        val updatedIds = pageCancellationsExcluded.asSequence()
             .map { it.id }
             .toSet()
         operationOnOrderRepository.markOrderOperationsAsProcessed(updatedIds)
     }
+
+    private fun filteredOutCancellations(page: List<OperationOnOrder>): List<OperationOnOrder> {
+        val cancellations = page.asSequence()
+            .filter { it.orderStatus == OrderStatus.CANCELLED }
+            .map { it.id }
+            .toSet()
+        operationOnOrderRepository.markOrderOperationsFailed(cancellations)
+
+        return page.asSequence()
+            .filter { it.orderStatus != OrderStatus.CANCELLED }
+            .toList()
+    }
+
 
 }

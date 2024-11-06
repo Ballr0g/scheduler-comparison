@@ -8,11 +8,21 @@ import kotlin.math.min
 /**
  * An iterator implementation that uses an extractor function to retrieve its values from a data source as a List.
  */
-class ListJobPaginator<out T, V : PaginatedJobMetadata, K>(
+class ListJobPaginator<out T, V : PaginatedJobMetadata, K> private constructor(
     override val jobData: T,
     override val jobMetadata: V,
     private val pageExtractor: (pageSize: Long, jobData: T) -> List<K>,
 ) : JobPaginator<T, V, K> {
+
+    data class Builder<T, V : PaginatedJobMetadata, K>(
+        val jobData: T,
+        val jobMetadata: V,
+        val pageExtractor: (pageSize: Long, jobData: T) -> List<K>,
+    ) {
+
+        fun build() = ListJobPaginator(jobData, jobMetadata, pageExtractor)
+
+    }
 
     override val pageSize: Long = jobMetadata.pageSize
 
@@ -57,3 +67,10 @@ class ListJobPaginator<out T, V : PaginatedJobMetadata, K>(
         return currentPage
     }
 }
+
+fun <T, V : PaginatedJobMetadata, K> listJobPaginator(
+    jobData: T,
+    jobMetadata: V,
+    pageExtractor: (pageSize: Long, jobData: T) -> List<K>,
+    buildActions: (ListJobPaginator.Builder<T, V, K>.() -> Unit)? = null
+) = ListJobPaginator.Builder(jobData, jobMetadata, pageExtractor).apply(buildActions ?: {}).build()

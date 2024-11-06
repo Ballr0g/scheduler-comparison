@@ -55,7 +55,7 @@ scheduler:
         ignored-by-common: false
         max-count-per-execution: 30
         page-size: 10
-      - name: "WildFruits handler"
+      - name: "WildFruit handler"
         job-handler: dedicatedJobHandler
         merchant-ids: [5]
         order-statuses: [PAID, DELIVERED, FAILED, CANCELLED]
