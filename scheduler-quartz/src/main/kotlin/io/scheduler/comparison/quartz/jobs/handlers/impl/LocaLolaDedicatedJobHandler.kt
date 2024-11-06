@@ -2,43 +2,33 @@ package io.scheduler.comparison.quartz.jobs.handlers.impl
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.scheduler.comparison.quartz.domain.OrderRefund
-import io.scheduler.comparison.quartz.jobs.handlers.JobHandler
+import io.scheduler.comparison.quartz.jobs.handlers.PaginatedJobHandlerBase
 import io.scheduler.comparison.quartz.jobs.pagination.impl.listJobPaginator
 import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobData
 import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobMetadata
 import io.scheduler.comparison.quartz.messaging.LocaLolaRefundsSender
 import io.scheduler.comparison.quartz.repositories.LocaLolaFailuresRepository
 import org.springframework.stereotype.Component
+import org.springframework.transaction.annotation.Transactional
 
 @Component
 class LocaLolaDedicatedJobHandler(
     private val locaLolaFailuresRepository: LocaLolaFailuresRepository,
     private val locaLolaRefundsSender: LocaLolaRefundsSender,
-) : JobHandler<DedicatedOrderJobData, DedicatedOrderJobMetadata> {
+) : PaginatedJobHandlerBase<DedicatedOrderJobData, DedicatedOrderJobMetadata, OrderRefund>() {
 
     private companion object {
         private val log = KotlinLogging.logger {}
     }
 
+    @Transactional
     override fun executeInternal(orderJobData: DedicatedOrderJobData, orderJobMetadata: DedicatedOrderJobMetadata) {
         log.info { "[${orderJobMetadata.jobName}] Started: " +
                 "merchantIds=${orderJobData.merchantIds}, orderStatuses=${orderJobData.orderStatuses}" }
-
-        val paginator = listJobPaginator(
-            jobData = orderJobData,
-            jobMetadata = orderJobMetadata,
-            pageExtractor = locaLolaFailuresRepository::readAvailableOrderRefunds
-        )
-
-        if (!paginator.hasNext()) {
-            log.info { "[${orderJobMetadata.jobName}] No new entries available, execution completed" }
-            return
-        }
-
-        paginator.forEach { handleNextPage(it) }
+        super.executeInternal(orderJobData, orderJobMetadata)
     }
 
-    private fun handleNextPage(page: List<OrderRefund>) {
+    override fun handleNextPage(page: List<OrderRefund>) {
         locaLolaRefundsSender.sendAllRefunds(page)
 
         val refundIds = page.asSequence()
@@ -46,5 +36,14 @@ class LocaLolaDedicatedJobHandler(
             .toSet()
         locaLolaFailuresRepository.closeEligibleForRefunds(refundIds)
     }
+
+    override fun paginator(
+        jobData: DedicatedOrderJobData,
+        jobMetadata: DedicatedOrderJobMetadata
+    ) = listJobPaginator(
+        jobData = jobData,
+        jobMetadata = jobMetadata,
+        pageExtractor = locaLolaFailuresRepository::readAvailableOrderRefunds
+    )
 
 }
