@@ -3,7 +3,7 @@ package io.scheduler.comparison.quartz.jobs.pagination
 import io.scheduler.comparison.quartz.domain.OperationOnOrder
 import io.scheduler.comparison.quartz.domain.OrderOperationStatus
 import io.scheduler.comparison.quartz.domain.OrderStatus
-import io.scheduler.comparison.quartz.jobs.pagination.impl.ListJobPaginator
+import io.scheduler.comparison.quartz.jobs.pagination.impl.listJobPaginator
 import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobData
 import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobMetadata
 import org.junit.jupiter.api.Assertions.*
@@ -58,8 +58,9 @@ class ListJobPaginatorTest {
     @Test
     fun `Empty ListJobPaginator hasNext() returns false`() {
         // given
-        val jobPaginator = ListJobPaginator<CommonOrderJobData, CommonOrderJobMetadata, OperationOnOrder>(
-            testCommonOrderJobData, testCommonOrderJobMetadata) { _, _ -> emptyList() }
+        val jobPaginator = listJobPaginator(
+            testCommonOrderJobData, testCommonOrderJobMetadata, { _, _ -> emptyList<Long>() }
+        )
 
         // when
         // then
@@ -69,8 +70,9 @@ class ListJobPaginatorTest {
     @Test
     fun `Empty ListJobPaginator next() throws NoSuchElementException`() {
         // given
-        val jobPaginator = ListJobPaginator<CommonOrderJobData, CommonOrderJobMetadata, OperationOnOrder>(
-            testCommonOrderJobData, testCommonOrderJobMetadata) { _, _ -> emptyList() }
+        val jobPaginator = listJobPaginator(
+            testCommonOrderJobData, testCommonOrderJobMetadata, { _, _ -> emptyList<Long>() }
+        )
 
         // when
         // then
@@ -80,8 +82,9 @@ class ListJobPaginatorTest {
     @Test
     fun `Single page for ListJobPaginator hasNext() returns true on first call`() {
         // given
-        val jobPaginator = ListJobPaginator(
-            testCommonOrderJobData, testCommonOrderJobMetadata) { _, _ -> testOperationsOnOrder }
+        val jobPaginator = listJobPaginator(
+            testCommonOrderJobData, testCommonOrderJobMetadata, { _, _ -> testOperationsOnOrder }
+        )
 
         // when
         // then
@@ -91,8 +94,9 @@ class ListJobPaginatorTest {
     @Test
     fun `Multiple pages for ListJobPaginator next() return expected value on first call`() {
         // given
-        val jobPaginator = ListJobPaginator(testCommonOrderJobData, testCommonOrderJobMetadata)
-        { pageSize, _ -> testOperationsOnOrder.take(pageSize.toInt()) }
+        val jobPaginator = listJobPaginator(testCommonOrderJobData, testCommonOrderJobMetadata,
+            { pageSize, _ -> testOperationsOnOrder.take(pageSize.toInt()) }
+        )
 
         // when
         val actualPage = jobPaginator.next()
@@ -106,8 +110,9 @@ class ListJobPaginatorTest {
     fun `Multiple pages for ListJobPaginator hasNext() returns true when second page exists`() {
         // given
         var currentPage = 0
-        val jobPaginator = ListJobPaginator(testCommonOrderJobData, testCommonOrderJobMetadata)
-        { _, _ -> listOf(testOperationsOnOrder[currentPage++]) }
+        val jobPaginator = listJobPaginator(testCommonOrderJobData, testCommonOrderJobMetadata,
+            { _, _ -> listOf(testOperationsOnOrder[currentPage++]) }
+        )
 
         // when
         jobPaginator.next()
@@ -120,8 +125,9 @@ class ListJobPaginatorTest {
     fun `Multiple pages for ListJobPaginator next() returns expected second page when it exists`() {
         // given
         var currentPage = 0
-        val jobPaginator = ListJobPaginator(testCommonOrderJobData, testCommonOrderJobMetadata)
-        { _, _ -> listOf(testOperationsOnOrder[currentPage++]) }
+        val jobPaginator = listJobPaginator(testCommonOrderJobData, testCommonOrderJobMetadata,
+            { _, _ -> listOf(testOperationsOnOrder[currentPage++]) }
+        )
 
         // when
         jobPaginator.next()
@@ -139,8 +145,9 @@ class ListJobPaginatorTest {
             pageSize = 2,
             maxCountPerExecution = 1
         )
-        val jobPaginator = ListJobPaginator(testCommonOrderJobData, jobMetadataExcessivePageSize)
-        { pageSize, _ -> testOperationsOnOrder.take(pageSize.toInt()) }
+        val jobPaginator = listJobPaginator(testCommonOrderJobData, jobMetadataExcessivePageSize,
+            { pageSize, _ -> testOperationsOnOrder.take(pageSize.toInt()) }
+        )
 
         // when
         val actualPage = jobPaginator.next()

@@ -15,9 +15,9 @@ class ListJobPaginator<out T, V : PaginatedJobMetadata, K> private constructor(
 ) : JobPaginator<T, V, K> {
 
     data class Builder<T, V : PaginatedJobMetadata, K>(
-        val jobData: T,
-        val jobMetadata: V,
-        val pageExtractor: (pageSize: Long, jobData: T) -> List<K>,
+        var jobData: T,
+        var jobMetadata: V,
+        var pageExtractor: (pageSize: Long, jobData: T) -> List<K>,
     ) {
 
         fun build() = ListJobPaginator(jobData, jobMetadata, pageExtractor)
