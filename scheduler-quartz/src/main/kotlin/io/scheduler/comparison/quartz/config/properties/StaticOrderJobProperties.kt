@@ -37,7 +37,9 @@ data class StaticOrderJobProperties(
     data class StaticDedicatedMerchantsOrderJob(
         @field:NotBlank
         val name: String,
+        @field:Size(min = 1, max = 1000)
         val merchantIds: List<Long>,
+        @field:Size(min = 1, max = 1000)
         val orderStatuses: List<OrderStatus>,
         @field:NotBlank
         val cron: String,
