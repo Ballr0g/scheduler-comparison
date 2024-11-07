@@ -1,6 +1,5 @@
-package io.scheduler.comparison.quartz.jobs.handlers.impl
+package io.scheduler.comparison.quartz.jobs.handlers.pagination
 
-import io.github.oshai.kotlinlogging.KotlinLogging
 import io.scheduler.comparison.quartz.domain.OperationOnOrder
 import io.scheduler.comparison.quartz.domain.OrderStatus
 import io.scheduler.comparison.quartz.jobs.handlers.PaginatedJobHandlerBase
@@ -19,10 +18,6 @@ class WildFruitDedicatedJobHandler(
     private val operationOnOrderRepository: WildFruitOperationOnOrderRepository,
     private val notificationPlatformSender: NotificationPlatformSender,
 ) : PaginatedJobHandlerBase<DedicatedOrderJobData, DedicatedOrderJobMetadata, OperationOnOrder>() {
-
-    private companion object {
-        private val log = KotlinLogging.logger {}
-    }
 
     @Transactional
     override fun executeInternal(

@@ -7,7 +7,8 @@ import org.springframework.transaction.annotation.Transactional
 abstract class PaginatedJobHandlerBase<T, V : PaginatedJobMetadata, K> : PaginatedJobHandler<T, V, K> {
 
     protected companion object {
-        private val log = KotlinLogging.logger {}
+        @JvmStatic
+        protected val log = KotlinLogging.logger {}
     }
 
     @Transactional

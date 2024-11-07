@@ -1,6 +1,5 @@
-package io.scheduler.comparison.quartz.jobs.handlers.impl
+package io.scheduler.comparison.quartz.jobs.handlers.pagination
 
-import io.github.oshai.kotlinlogging.KotlinLogging
 import io.scheduler.comparison.quartz.domain.OperationOnOrder
 import io.scheduler.comparison.quartz.jobs.handlers.PaginatedJobHandlerBase
 import io.scheduler.comparison.quartz.jobs.pagination.impl.listJobPaginator
@@ -18,10 +17,6 @@ class CommonJobHandler(
     private val operationOnOrderRepository: CommonOperationOnOrderRepository,
     private val notificationPlatformSender: NotificationPlatformSender,
 ) : PaginatedJobHandlerBase<CommonOrderJobData, CommonOrderJobMetadata, OperationOnOrder>() {
-
-    private companion object {
-        private val log = KotlinLogging.logger {}
-    }
 
     @Transactional
     override fun executeInternal(

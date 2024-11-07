@@ -1,6 +1,5 @@
-package io.scheduler.comparison.quartz.jobs.handlers.impl
+package io.scheduler.comparison.quartz.jobs.handlers.pagination
 
-import io.github.oshai.kotlinlogging.KotlinLogging
 import io.scheduler.comparison.quartz.domain.OrderRefund
 import io.scheduler.comparison.quartz.jobs.handlers.PaginatedJobHandlerBase
 import io.scheduler.comparison.quartz.jobs.pagination.impl.listJobPaginator
@@ -18,10 +17,6 @@ class LocaLolaDedicatedJobHandler(
     private val locaLolaFailuresRepository: LocaLolaFailuresRepository,
     private val locaLolaRefundsSender: LocaLolaRefundsSender,
 ) : PaginatedJobHandlerBase<DedicatedOrderJobData, DedicatedOrderJobMetadata, OrderRefund>() {
-
-    private companion object {
-        private val log = KotlinLogging.logger {}
-    }
 
     @Transactional
     override fun executeInternal(orderJobData: DedicatedOrderJobData, orderJobMetadata: DedicatedOrderJobMetadata) {
