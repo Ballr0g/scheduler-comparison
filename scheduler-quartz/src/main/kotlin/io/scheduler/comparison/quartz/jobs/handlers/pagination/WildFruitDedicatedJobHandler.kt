@@ -7,7 +7,7 @@ import io.scheduler.comparison.quartz.jobs.pagination.impl.listJobPaginator
 import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobData
 import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobMetadata
 import io.scheduler.comparison.quartz.messaging.NotificationPlatformSender
-import io.scheduler.comparison.quartz.repositories.WildFruitOperationOnOrderRepository
+import io.scheduler.comparison.quartz.repositories.pagination.WildFruitOperationOnOrderRepository
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional

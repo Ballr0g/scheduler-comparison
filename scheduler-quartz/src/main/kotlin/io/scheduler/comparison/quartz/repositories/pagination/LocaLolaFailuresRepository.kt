@@ -1,12 +1,14 @@
-package io.scheduler.comparison.quartz.repositories
+package io.scheduler.comparison.quartz.repositories.pagination
 
 import io.scheduler.comparison.quartz.domain.OrderRefund
 import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobData
 import org.intellij.lang.annotations.Language
+import org.springframework.context.annotation.Profile
 import org.springframework.jdbc.core.simple.JdbcClient
 import org.springframework.stereotype.Repository
 
 @Repository
+@Profile("pagination")
 class LocaLolaFailuresRepository(
     private val jdbcClient: JdbcClient
 ) {
