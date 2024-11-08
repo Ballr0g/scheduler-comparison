@@ -15,11 +15,11 @@ spring:
       - ram
       # - streaming
       - pagination
-      # - clustering
+      # - clustered
       - standalone
   quartz:
     auto-startup: true
-    scheduler-name: "Demo quartz scheduler"
+    scheduler-name: "Demo-Quartz-Scheduler"
   lifecycle:
     timeout-per-shutdown-phase: 4m
   main:
@@ -78,6 +78,23 @@ scheduler:
         cron: "0 */1 * * * ?"
         max-count-per-execution: 30
         page-size: 10
+
+---
+spring:
+  config:
+    activate:
+      on-profile: clustered
+
+  quartz:
+    properties:
+      org:
+        quartz:
+          scheduler:
+            instanceName: Quartz-Clustered
+            instanceId: Quartz-Clustered-0
+          jobStore:
+            clusterCheckinInterval: 20000
+            isClustered: true
 
 ---
 spring:
