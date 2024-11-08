@@ -50,6 +50,8 @@ org:
       enabled: true
     dashboard:
       enabled: true
+    miscellaneous:
+      allow-anonymous-data-usage: false
 
 kafka:
   topics:
