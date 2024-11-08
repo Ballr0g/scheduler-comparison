@@ -44,6 +44,13 @@ spring:
       bootstrap-servers: localhost:29093
       client-id: scheduler-comparison-jobrunr-1
 
+org:
+  jobrunr:
+    background-job-server:
+      enabled: true
+    dashboard:
+      enabled: true
+
 kafka:
   topics:
     notification-platform: order-statuses-jobrunr.1
