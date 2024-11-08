@@ -1,20 +1,20 @@
 package io.scheduler.comparison.quartz.jobs.pagination.impl
 
 import io.scheduler.comparison.quartz.jobs.pagination.JobPaginator
-import io.scheduler.comparison.quartz.jobs.state.PaginatedJobMetadata
+import io.scheduler.comparison.quartz.jobs.state.ChunkedJobMetadata
 import kotlin.math.ceil
 import kotlin.math.min
 
 /**
  * An iterator implementation that uses an extractor function to retrieve its values from a data source as a List.
  */
-class ListJobPaginator<out T, V : PaginatedJobMetadata, K> private constructor(
+class ListJobPaginator<out T, V : ChunkedJobMetadata, K> private constructor(
     override val jobData: T,
     override val jobMetadata: V,
     private val pageExtractor: (pageSize: Int, jobData: T) -> List<K>,
 ) : JobPaginator<T, V, K> {
 
-    data class Builder<T, V : PaginatedJobMetadata, K>(
+    data class Builder<T, V : ChunkedJobMetadata, K>(
         var jobData: T,
         var jobMetadata: V,
         var pageExtractor: (pageSize: Int, jobData: T) -> List<K>,
@@ -24,7 +24,7 @@ class ListJobPaginator<out T, V : PaginatedJobMetadata, K> private constructor(
 
     }
 
-    override val pageSize: Int = jobMetadata.pageSize
+    override val pageSize: Int = jobMetadata.chunkSize
 
     private var pagesLeft = ceil(jobMetadata.maxCountPerExecution.toDouble() / pageSize).toLong()
     private var elementsLeft = jobMetadata.maxCountPerExecution
@@ -68,7 +68,7 @@ class ListJobPaginator<out T, V : PaginatedJobMetadata, K> private constructor(
     }
 }
 
-fun <T, V : PaginatedJobMetadata, K> listJobPaginator(
+fun <T, V : ChunkedJobMetadata, K> listJobPaginator(
     jobData: T,
     jobMetadata: V,
     pageExtractor: (pageSize: Int, jobData: T) -> List<K>,

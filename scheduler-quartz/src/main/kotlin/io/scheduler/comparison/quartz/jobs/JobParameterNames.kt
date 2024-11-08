@@ -31,3 +31,9 @@ enum class CommonOrderJobParams(
     MAX_COUNT_PER_EXECUTION("maxCountPerExecution"),
     JOB_HANDLER("jobHandler"),
 }
+
+object JobHandlerNames {
+    const val COMMON_JOB_HANDLER = "commonJobHandler"
+    const val LOCA_LOLA_DEDICATED_JOB_HANDLER = "locaLolaDedicatedJobHandler"
+    const val WILD_FRUIT_DEDICATED_JOB_HANDLER = "wildFruitDedicatedJobHandler"
+}

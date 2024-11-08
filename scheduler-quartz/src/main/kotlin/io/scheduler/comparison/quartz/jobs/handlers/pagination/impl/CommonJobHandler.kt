@@ -1,7 +1,8 @@
-package io.scheduler.comparison.quartz.jobs.handlers.pagination
+package io.scheduler.comparison.quartz.jobs.handlers.pagination.impl
 
 import io.scheduler.comparison.quartz.domain.OperationOnOrder
-import io.scheduler.comparison.quartz.jobs.handlers.PaginatedJobHandlerBase
+import io.scheduler.comparison.quartz.jobs.JobHandlerNames
+import io.scheduler.comparison.quartz.jobs.handlers.pagination.PaginatedJobHandlerBase
 import io.scheduler.comparison.quartz.jobs.pagination.impl.listJobPaginator
 import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobData
 import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobMetadata
@@ -11,8 +12,8 @@ import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
-@Component
 @Profile("pagination")
+@Component(JobHandlerNames.COMMON_JOB_HANDLER)
 class CommonJobHandler(
     private val operationOnOrderRepository: CommonOperationOnOrderRepository,
     private val notificationPlatformSender: NotificationPlatformSender,

@@ -1,8 +1,9 @@
-package io.scheduler.comparison.quartz.jobs.handlers.streaming
+package io.scheduler.comparison.quartz.jobs.handlers.streaming.impl
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.scheduler.comparison.quartz.domain.OperationOnOrder
-import io.scheduler.comparison.quartz.jobs.handlers.JobHandler
+import io.scheduler.comparison.quartz.jobs.JobHandlerNames
+import io.scheduler.comparison.quartz.jobs.handlers.streaming.ChunkedStreamJobHandlerBase
 import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobData
 import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobMetadata
 import io.scheduler.comparison.quartz.messaging.NotificationPlatformSender
@@ -10,15 +11,13 @@ import io.scheduler.comparison.quartz.repositories.streaming.CommonStreamingOper
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
-import java.util.stream.Stream
-import kotlin.streams.asSequence
 
-@Component("commonJobHandler")
 @Profile("streaming")
-class CommonStreamingJobHandler(
+@Component(JobHandlerNames.COMMON_JOB_HANDLER)
+class CommonChunkedStreamJobHandler(
     private val operationOnOrderRepository: CommonStreamingOperationOnOrderRepository,
     private val notificationPlatformSender: NotificationPlatformSender,
-) : JobHandler<CommonOrderJobData, CommonOrderJobMetadata> {
+) : ChunkedStreamJobHandlerBase<CommonOrderJobData, CommonOrderJobMetadata, OperationOnOrder>() {
 
     private companion object {
         private val log = KotlinLogging.logger {}
@@ -28,25 +27,13 @@ class CommonStreamingJobHandler(
     override fun executeInternal(orderJobData: CommonOrderJobData, orderJobMetadata: CommonOrderJobMetadata) {
         log.info { "[${orderJobMetadata.jobName}] Started: " +
                 "excludedMerchantIds=${orderJobData.excludedMerchantIds}, orderStatuses=${orderJobData.orderStatuses}" }
-
-        val availableOperationsStream = operationOnOrderRepository.readUnprocessedOperations(orderJobData, orderJobMetadata)
-        consumeDataStream(availableOperationsStream, orderJobMetadata)
-        log.info { "[${orderJobMetadata.jobName}] Completed successfully" }
+        super.executeInternal(orderJobData, orderJobMetadata)
     }
 
-    private fun consumeDataStream(
-        operationOnOrderStream: Stream<OperationOnOrder>,
-        orderJobMetadata: CommonOrderJobMetadata,
-    ) {
-        operationOnOrderStream.use {
-            it.asSequence()
-                .take(orderJobMetadata.maxCountPerExecution)
-                .chunked(orderJobMetadata.pageSize)
-                .forEach { chunk -> handleNextChunk(chunk) }
-        }
-    }
+    override fun openDataStream(orderJobData: CommonOrderJobData, orderJobMetadata: CommonOrderJobMetadata)
+            = operationOnOrderRepository.readUnprocessedOperations(orderJobData, orderJobMetadata)
 
-    private fun handleNextChunk(chunk: List<OperationOnOrder>) {
+    override fun handleNextChunk(chunk: List<OperationOnOrder>) {
         val updatedRecords = operationOnOrderRepository.incrementOperationsReadCount(chunk)
         notificationPlatformSender.sendAllOperationsOnOrder(updatedRecords)
         val updatedIds = updatedRecords.asSequence()

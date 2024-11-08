@@ -1,8 +1,8 @@
 package io.scheduler.comparison.quartz.jobs.state
 
-interface PaginatedJobMetadata : JobMetadata {
+interface ChunkedJobMetadata : JobMetadata {
 
-    val pageSize: Int
+    val chunkSize: Int
     val maxCountPerExecution: Int
 
 }

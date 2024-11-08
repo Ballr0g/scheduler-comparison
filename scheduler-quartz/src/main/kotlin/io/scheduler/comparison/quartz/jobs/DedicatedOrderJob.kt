@@ -64,7 +64,7 @@ class DedicatedOrderJob : Job {
         jobName = jobDataMap.getString(DedicatedOrderJobParams.JOB_NAME.value),
         jobCron = jobDataMap.getString(DedicatedOrderJobParams.JOB_CRON.value),
         maxCountPerExecution = jobDataMap.getInt(DedicatedOrderJobParams.MAX_COUNT_PER_EXECUTION.value),
-        pageSize = jobDataMap.getInt(DedicatedOrderJobParams.PAGE_SIZE.value),
+        chunkSize = jobDataMap.getInt(DedicatedOrderJobParams.PAGE_SIZE.value),
     )
 
 }
