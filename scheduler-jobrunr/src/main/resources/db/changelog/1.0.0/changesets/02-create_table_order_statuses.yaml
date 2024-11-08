@@ -1,0 +1,79 @@
+databaseChangeLog:
+  -   changeSet:
+        id: '1.0.0-02-0'
+        author: 'ballr0g'
+        comment: 'Create table order_statuses.'
+        changes:
+          - createTable:
+              tableName: order_statuses
+              schemaName: scheduler_jobrunr
+              remarks: 'The table for storing merchants of our marketplace.'
+              columns:
+                - column:
+                    name: id
+                    type: bigint
+                    remarks: 'Unique id of the order status entry.'
+                    autoIncrement: true
+                    constraints:
+                      primaryKey: true
+                - column:
+                    name: order_id
+                    type: uuid
+                    remarks: 'Id of the order changed.'
+                    constraints:
+                      nullable: false
+                - column:
+                    name: merchant_id
+                    type: bigint
+                    remarks: 'Merchant this order is associated with'
+                    constraints:
+                      foreignKeyName: fk_scheduler_jobrunr_order_statuses_merchant_id
+                      referencedTableSchemaName: scheduler_jobrunr
+                      referencedTableName: merchants
+                      referencedColumnNames: id
+                - column:
+                    name: status_change_time
+                    type: timestamp
+                    remarks: 'Time when the order changed to the status of this record.'
+                    constraints:
+                      nullable: false
+                - column:
+                    name: operation_status
+                    type: varchar(31)
+                    remarks: 'Status of this record in the transactional outbox table.'
+                    defaultValue: 'READY_FOR_PROCESSING'
+                    constraints:
+                      nullable: false
+                - column:
+                    name: record_read_count
+                    type: bigint
+                    remarks: 'Number of reads of this record.'
+                    defaultValueNumeric: '0'
+                    constraints:
+                      nullable: false
+                - column:
+                    name: order_status
+                    type: varchar(31)
+                    remarks: 'Status of the order at the given point of time.'
+                    constraints:
+                      nullable: false
+  -   changeSet:
+        id: '1.0.0-02-1'
+        author: 'ballr0g'
+        changes:
+          - sql:
+              sql: |
+                ALTER TABLE scheduler_jobrunr.order_statuses
+                ADD CONSTRAINT chk_scheduler_jobrunr_operation_status
+                CHECK (operation_status IN (
+                  'READY_FOR_PROCESSING', 'SENT_TO_NOTIFIER', 'FOR_RETRY', 'RETRIES_EXCEEDED', 'ERROR'
+                ));
+  -   changeSet:
+        id: '1.0.0-02-2'
+        author: 'ballr0g'
+        changes:
+          - sql:
+              sql: |
+                ALTER TABLE scheduler_jobrunr.order_statuses
+                ADD CONSTRAINT chk_scheduler_jobrunr_order_status
+                CHECK (order_status IN ('PAID', 'DELIVERED', 'FAILED', 'CANCELLED'));
