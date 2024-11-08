@@ -6,6 +6,7 @@ import io.scheduler.comparison.quartz.domain.OrderStatus
 import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobData
 import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobMetadata
 import org.intellij.lang.annotations.Language
+import org.springframework.context.annotation.Profile
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
@@ -14,6 +15,7 @@ import java.util.UUID
 import java.util.stream.Stream
 
 @Repository
+@Profile("streaming")
 class CommonStreamingOperationOnOrderRepository(
     /**
      *  NamedParameterJdbcTemplate is used here explicitly instead of NamedParameterJdbcOperations because the
