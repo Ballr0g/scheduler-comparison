@@ -1,19 +1,17 @@
-package io.scheduler.comparison.quartz.repositories
+package io.scheduler.comparison.quartz.repositories.streaming
 
 import io.scheduler.comparison.quartz.domain.OperationOnOrder
 import io.scheduler.comparison.quartz.domain.OrderOperationStatus
 import io.scheduler.comparison.quartz.domain.OrderStatus
 import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobData
+import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobMetadata
 import org.intellij.lang.annotations.Language
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
-import org.springframework.transaction.annotation.Propagation
-import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 import java.util.UUID
 import java.util.stream.Stream
-import kotlin.streams.asSequence
 
 @Repository
 class CommonStreamingOperationOnOrderRepository(
@@ -32,7 +30,8 @@ class CommonStreamingOperationOnOrderRepository(
                 FROM scheduler_quartz.order_statuses
                 WHERE
                     operation_status IN ('READY_FOR_PROCESSING', 'FOR_RETRY')
-                    AND merchant_id NOT IN (:excludedMerchantIds)
+                    -- Support for empty excludedMerchantIds
+                    AND NOT (merchant_id = ANY(:excludedMerchantIds))
                     AND order_statuses.order_status IN (:orderStatuses)
                 FOR UPDATE SKIP LOCKED
                 LIMIT :maxCount
@@ -69,40 +68,38 @@ class CommonStreamingOperationOnOrderRepository(
         }
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    fun readUnprocessedWithReadCountIncrement(
-        pageSize: Int,
-        maxPageSize: Long,
-        orderJobData: CommonOrderJobData
-    ): Stream<OperationOnOrder> {
-        // Manually modify our fetch settings to match our needs.
-        jdbcTemplate.jdbcTemplate.fetchSize = pageSize
+    fun readUnprocessedOperations(
+        orderJobData: CommonOrderJobData,
+        orderJobMetadata: CommonOrderJobMetadata,
+    ): Stream<OperationOnOrder>
+        = jdbcTemplate.queryForStream(
+        READ_UNPROCESSED_ORDER_OPERATIONS_FOR_UPDATE_SQL,
+        mapOf(
+            "excludedMerchantIds" to orderJobData.excludedMerchantIds.toTypedArray(),
+            "orderStatuses" to orderJobData.orderStatuses.asSequence().map { it.value }.toSet(),
+            "maxCount" to orderJobMetadata.maxCountPerExecution.toInt(),
+        ), operationOnOrderRowMapper
+    )
 
-        jdbcTemplate.queryForStream(READ_UNPROCESSED_ORDER_OPERATIONS_FOR_UPDATE_SQL,
-            mapOf(
-                "excludedMerchantIds" to orderJobData.excludedMerchantIds,
-                "orderStatuses" to orderJobData.orderStatuses.asSequence().map { it.value }.toSet(),
-                "maxCount" to maxPageSize,
-            ), operationOnOrderRowMapper
-        ).use { unprocessedStream ->
-            val updatedOrderStatuses = unprocessedStream.asSequence()
-            // This might happen when the database is either empty or the entries are still locked by another action.
-            if (!updatedOrderStatuses.iterator().hasNext()) {
-                return Stream.empty()
-            }
-
-            return jdbcTemplate.queryForStream(INCREASE_UNPROCESSED_ORDER_OPERATION_READ_COUNT_SQL,
-                mapOf("ids" to updatedOrderStatuses.map { it.id }.toSet()),
-                operationOnOrderRowMapper
-            )
+    fun incrementOperationsReadCount(availableOperations: List<OperationOnOrder>): List<OperationOnOrder> {
+        // This might happen when the database is either empty or the entries are still locked by another action.
+        if (availableOperations.isEmpty()) {
+            return emptyList()
         }
+
+        return jdbcTemplate.query(
+            INCREASE_UNPROCESSED_ORDER_OPERATION_READ_COUNT_SQL,
+            mapOf("ids" to availableOperations.map { it.id }.toSet()),
+            operationOnOrderRowMapper
+        )
     }
 
     fun markOrderOperationsAsProcessed(orderIds: Set<Long>)
         = if (orderIds.isNotEmpty()) {
-            jdbcTemplate.update(CHANGE_ORDER_OPERATION_STATUSES_SQL,
+            jdbcTemplate.update(
+                CHANGE_ORDER_OPERATION_STATUSES_SQL,
                 mapOf(
-                    "orderOperationStatus" to OrderOperationStatus.SENT_TO_NOTIFIER,
+                    "orderOperationStatus" to OrderOperationStatus.SENT_TO_NOTIFIER.name,
                     "statusChangeTime" to LocalDateTime.now(),
                     "ids" to orderIds,
             ))
