@@ -2,6 +2,7 @@ package io.scheduler.comparison.quartz.repositories.streaming
 
 import io.scheduler.comparison.quartz.domain.OrderRefund
 import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobData
+import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobMetadata
 import org.intellij.lang.annotations.Language
 import org.springframework.context.annotation.Profile
 import org.springframework.jdbc.core.RowMapper
@@ -51,15 +52,19 @@ class LocaLolaStreamingFailuresRepository(
 
     fun readAvailableOrderRefunds(
         maxPageSize: Int,
-        orderJobData: DedicatedOrderJobData
-    ): Stream<OrderRefund>
-        = jdbcTemplate.queryForStream(READ_FAILURES_FOR_REFUND_SQL,
+        orderJobData: DedicatedOrderJobData,
+        orderJobMetadata: DedicatedOrderJobMetadata
+    ): Stream<OrderRefund> {
+        jdbcTemplate.jdbcTemplate.fetchSize = orderJobMetadata.chunkSize
+
+        return jdbcTemplate.queryForStream(READ_FAILURES_FOR_REFUND_SQL,
             mapOf(
                 "merchantIds" to orderJobData.merchantIds,
                 "maxPageSize" to maxPageSize
             ),
             orderRefundRowMapper
         )
+    }
 
     fun closeEligibleForRefunds(refundIds: Set<Long>)
         = if (refundIds.isNotEmpty()) {

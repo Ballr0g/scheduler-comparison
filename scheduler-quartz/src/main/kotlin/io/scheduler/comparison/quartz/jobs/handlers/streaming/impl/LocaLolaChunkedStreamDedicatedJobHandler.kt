@@ -34,7 +34,8 @@ class LocaLolaChunkedStreamDedicatedJobHandler(
     override fun openDataStream(orderJobData: DedicatedOrderJobData, orderJobMetadata: DedicatedOrderJobMetadata
     ) = locaLolaFailuresRepository.readAvailableOrderRefunds(
         maxPageSize = orderJobMetadata.maxCountPerExecution,
-        orderJobData = orderJobData
+        orderJobData = orderJobData,
+        orderJobMetadata = orderJobMetadata,
     )
 
     override fun handleNextChunk(chunk: List<OrderRefund>) {

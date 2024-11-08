@@ -73,15 +73,18 @@ class CommonStreamingOperationOnOrderRepository(
     fun readUnprocessedOperations(
         orderJobData: CommonOrderJobData,
         orderJobMetadata: CommonOrderJobMetadata,
-    ): Stream<OperationOnOrder>
-        = jdbcTemplate.queryForStream(
-        READ_UNPROCESSED_ORDER_OPERATIONS_FOR_UPDATE_SQL,
-        mapOf(
-            "excludedMerchantIds" to orderJobData.excludedMerchantIds.toTypedArray(),
-            "orderStatuses" to orderJobData.orderStatuses.asSequence().map { it.value }.toSet(),
-            "maxCount" to orderJobMetadata.maxCountPerExecution,
-        ), operationOnOrderRowMapper
-    )
+    ): Stream<OperationOnOrder> {
+        jdbcTemplate.jdbcTemplate.fetchSize = orderJobMetadata.chunkSize
+
+        return jdbcTemplate.queryForStream(
+            READ_UNPROCESSED_ORDER_OPERATIONS_FOR_UPDATE_SQL,
+            mapOf(
+                "excludedMerchantIds" to orderJobData.excludedMerchantIds.toTypedArray(),
+                "orderStatuses" to orderJobData.orderStatuses.asSequence().map { it.value }.toSet(),
+                "maxCount" to orderJobMetadata.maxCountPerExecution,
+            ), operationOnOrderRowMapper
+        )
+    }
 
     fun incrementOperationsReadCount(availableOperations: List<OperationOnOrder>): List<OperationOnOrder> {
         // This might happen when the database is either empty or the entries are still locked by another action.
