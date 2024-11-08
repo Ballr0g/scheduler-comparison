@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional
 
 @Profile("pagination")
 @Component(JobHandlerNames.LOCA_LOLA_DEDICATED_JOB_HANDLER)
-class LocaLolaDedicatedJobHandler(
+class LocaLolaPaginatedJobHandler(
     private val locaLolaFailuresRepository: LocaLolaFailuresRepository,
     private val locaLolaRefundsSender: LocaLolaRefundsSender,
 ) : PaginatedJobHandlerBase<DedicatedOrderJobData, DedicatedOrderJobMetadata, OrderRefund>() {

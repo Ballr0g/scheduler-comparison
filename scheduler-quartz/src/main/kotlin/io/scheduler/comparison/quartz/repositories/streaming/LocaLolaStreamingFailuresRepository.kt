@@ -6,14 +6,14 @@ import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobMetadata
 import io.scheduler.comparison.quartz.repositories.DomainRowMappers.orderRefundRowMapper
 import org.intellij.lang.annotations.Language
 import org.springframework.context.annotation.Profile
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations
 import org.springframework.stereotype.Repository
 import java.util.stream.Stream
 
 @Repository
 @Profile("streaming")
 class LocaLolaStreamingFailuresRepository(
-    private val jdbcTemplate: NamedParameterJdbcTemplate
+    private val jdbcOperations: NamedParameterJdbcOperations
 ) {
 
     private companion object {
@@ -27,8 +27,8 @@ class LocaLolaStreamingFailuresRepository(
                 os.order_status = 'FAILED'
                 AND orr.merchant_id IN (:merchantIds)
                 AND orr.eligible_for_refund = true
-            LIMIT :maxPageSize
             FOR UPDATE OF orr SKIP LOCKED
+            LIMIT :maxCount
         """
 
         @Language("PostgreSQL")
@@ -41,24 +41,19 @@ class LocaLolaStreamingFailuresRepository(
     }
 
     fun readAvailableOrderRefunds(
-        maxPageSize: Int,
         orderJobData: DedicatedOrderJobData,
         orderJobMetadata: DedicatedOrderJobMetadata
-    ): Stream<OrderRefund> {
-        jdbcTemplate.jdbcTemplate.fetchSize = orderJobMetadata.chunkSize
-
-        return jdbcTemplate.queryForStream(READ_FAILURES_FOR_REFUND_SQL,
-            mapOf(
-                "merchantIds" to orderJobData.merchantIds,
-                "maxPageSize" to maxPageSize
-            ),
-            orderRefundRowMapper
-        )
-    }
+    ): Stream<OrderRefund> = jdbcOperations.queryForStream(READ_FAILURES_FOR_REFUND_SQL,
+        mapOf(
+            "merchantIds" to orderJobData.merchantIds,
+            "maxCount" to orderJobMetadata.maxCountPerExecution
+        ),
+        orderRefundRowMapper
+    )
 
     fun closeEligibleForRefunds(refundIds: Set<Long>)
         = if (refundIds.isNotEmpty()) {
-            jdbcTemplate.update(UPDATE_FAILURES_AS_NON_REFUNDABLE_SQL,
+            jdbcOperations.update(UPDATE_FAILURES_AS_NON_REFUNDABLE_SQL,
                 mapOf("refundIds" to refundIds)
             )
         } else 0

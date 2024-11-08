@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional
 
 @Profile("pagination")
 @Component(JobHandlerNames.WILD_FRUIT_DEDICATED_JOB_HANDLER)
-class WildFruitDedicatedJobHandler(
+class WildFruitPaginatedJobHandler(
     private val operationOnOrderRepository: WildFruitOperationOnOrderRepository,
     private val notificationPlatformSender: NotificationPlatformSender,
 ) : PaginatedJobHandlerBase<DedicatedOrderJobData, DedicatedOrderJobMetadata, OperationOnOrder>() {
@@ -40,6 +40,8 @@ class WildFruitDedicatedJobHandler(
         operationOnOrderRepository.markOrderOperationsAsProcessed(updatedIds)
     }
 
+    @Suppress("DuplicatedCode")
+    // There are similar handlers for different profiles never intersecting, we're not concerned by duplication.
     private fun filteredOutCancellations(page: List<OperationOnOrder>): List<OperationOnOrder> {
         val cancellations = page.asSequence()
             .filter { it.orderStatus == OrderStatus.CANCELLED }

@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional
 
 @Profile("pagination")
 @Component(JobHandlerNames.COMMON_JOB_HANDLER)
-class CommonJobHandler(
+class CommonPaginatedJobHandler(
     private val operationOnOrderRepository: CommonOperationOnOrderRepository,
     private val notificationPlatformSender: NotificationPlatformSender,
 ) : PaginatedJobHandlerBase<CommonOrderJobData, CommonOrderJobMetadata, OperationOnOrder>() {

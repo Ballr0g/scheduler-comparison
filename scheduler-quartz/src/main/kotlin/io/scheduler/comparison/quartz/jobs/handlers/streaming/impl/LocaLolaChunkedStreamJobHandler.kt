@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional
 
 @Profile("streaming")
 @Component(JobHandlerNames.LOCA_LOLA_DEDICATED_JOB_HANDLER)
-class LocaLolaChunkedStreamDedicatedJobHandler(
+class LocaLolaChunkedStreamJobHandler(
     private val locaLolaFailuresRepository: LocaLolaStreamingFailuresRepository,
     private val locaLolaRefundsSender: LocaLolaRefundsSender,
 ) : ChunkedStreamJobHandlerBase<DedicatedOrderJobData, DedicatedOrderJobMetadata, OrderRefund>() {
@@ -33,7 +33,6 @@ class LocaLolaChunkedStreamDedicatedJobHandler(
 
     override fun openDataStream(orderJobData: DedicatedOrderJobData, orderJobMetadata: DedicatedOrderJobMetadata
     ) = locaLolaFailuresRepository.readAvailableOrderRefunds(
-        maxPageSize = orderJobMetadata.maxCountPerExecution,
         orderJobData = orderJobData,
         orderJobMetadata = orderJobMetadata,
     )

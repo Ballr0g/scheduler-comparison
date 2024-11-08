@@ -2,8 +2,8 @@ package io.scheduler.comparison.quartz.repositories.streaming
 
 import io.scheduler.comparison.quartz.domain.OperationOnOrder
 import io.scheduler.comparison.quartz.domain.OrderOperationStatus
-import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobData
-import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobMetadata
+import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobData
+import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobMetadata
 import io.scheduler.comparison.quartz.repositories.DomainRowMappers.operationOnOrderRowMapper
 import org.intellij.lang.annotations.Language
 import org.springframework.context.annotation.Profile
@@ -14,20 +14,19 @@ import java.util.stream.Stream
 
 @Repository
 @Profile("streaming")
-class CommonStreamingOperationOnOrderRepository(
+class WildFruitStreamingOperationOnOrderRepository(
     private val jdbcOperations: NamedParameterJdbcOperations
 ) {
 
     private companion object {
         @Language("PostgreSQL")
-        const val READ_UNPROCESSED_ORDER_OPERATIONS_FOR_UPDATE_SQL =  """
+        const val READ_UNPROCESSED_ORDER_OPERATIONS_SQL =  """
                 SELECT id, order_id, order_statuses.merchant_id, status_change_time,
                     operation_status AS order_operation_status, record_read_count, order_status
                 FROM scheduler_quartz.order_statuses
                 WHERE
                     operation_status IN ('READY_FOR_PROCESSING', 'FOR_RETRY')
-                    -- Support for empty excludedMerchantIds
-                    AND NOT (merchant_id = ANY(:excludedMerchantIds))
+                    AND merchant_id IN (:merchantIds)
                     AND order_statuses.order_status IN (:orderStatuses)
                 FOR UPDATE SKIP LOCKED
                 LIMIT :maxCount
@@ -50,16 +49,15 @@ class CommonStreamingOperationOnOrderRepository(
                 status_change_time = :statusChangeTime
             WHERE id IN (:ids)
         """
-
     }
 
     fun readUnprocessedOperations(
-        orderJobData: CommonOrderJobData,
-        orderJobMetadata: CommonOrderJobMetadata,
+        orderJobData: DedicatedOrderJobData,
+        orderJobMetadata: DedicatedOrderJobMetadata,
     ): Stream<OperationOnOrder> = jdbcOperations.queryForStream(
-        READ_UNPROCESSED_ORDER_OPERATIONS_FOR_UPDATE_SQL,
+        READ_UNPROCESSED_ORDER_OPERATIONS_SQL,
         mapOf(
-            "excludedMerchantIds" to orderJobData.excludedMerchantIds.toTypedArray(),
+            "merchantIds" to orderJobData.merchantIds,
             "orderStatuses" to orderJobData.orderStatuses.asSequence().map { it.value }.toSet(),
             "maxCount" to orderJobMetadata.maxCountPerExecution,
         ), operationOnOrderRowMapper
@@ -78,14 +76,21 @@ class CommonStreamingOperationOnOrderRepository(
         )
     }
 
+    fun markOrderOperationsFailed(orderIds: Set<Long>) = markOrderOperationsAs(orderIds, OrderOperationStatus.ERROR)
+
     fun markOrderOperationsAsProcessed(orderIds: Set<Long>)
-        = if (orderIds.isNotEmpty()) {
-            jdbcOperations.update(
-                CHANGE_ORDER_OPERATION_STATUSES_SQL,
-                mapOf(
-                    "orderOperationStatus" to OrderOperationStatus.SENT_TO_NOTIFIER.name,
-                    "statusChangeTime" to LocalDateTime.now(),
-                    "ids" to orderIds,
+            = markOrderOperationsAs(orderIds, OrderOperationStatus.SENT_TO_NOTIFIER)
+
+    fun markOrderOperationsAs(orderIds: Set<Long>, status: OrderOperationStatus)
+            = if (orderIds.isNotEmpty()) {
+        jdbcOperations.update(
+            CHANGE_ORDER_OPERATION_STATUSES_SQL,
+            mapOf(
+                "orderOperationStatus" to status.name,
+                "statusChangeTime" to LocalDateTime.now(),
+                "ids" to orderIds,
             ))
     } else 0
+
+
 }
