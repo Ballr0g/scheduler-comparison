@@ -26,7 +26,8 @@ class CommonOperationOnOrderRepository(
                 FROM scheduler_quartz.order_statuses
                 WHERE
                     operation_status IN ('READY_FOR_PROCESSING', 'FOR_RETRY')
-                    AND merchant_id NOT IN (:excludedMerchantIds)
+                    -- Support for empty excludedMerchantIds
+                    AND NOT (merchant_id = ANY(:excludedMerchantIds))
                     AND order_statuses.order_status IN (:orderStatuses)
                 LIMIT :maxPageSize
                 FOR UPDATE SKIP LOCKED
@@ -58,7 +59,7 @@ class CommonOperationOnOrderRepository(
     ): List<OperationOnOrder> {
         val updatedOrderStatuses = jdbcClient.sql(READ_UNPROCESSED_ORDER_OPERATIONS_FOR_UPDATE_SQL)
             .param("maxPageSize", maxPageSize)
-            .param("excludedMerchantIds", orderJobData.excludedMerchantIds)
+            .param("excludedMerchantIds", orderJobData.excludedMerchantIds.toTypedArray())
             .param("orderStatuses", orderJobData.orderStatuses.asSequence().map { it.value }.toSet())
             .query(OperationOnOrder::class.java)
             .list()
