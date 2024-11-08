@@ -1,9 +1,10 @@
-package io.scheduler.comparison.quartz.repositories
+package io.scheduler.comparison.quartz.repositories.pagination
 
 import io.scheduler.comparison.quartz.domain.OperationOnOrder
 import io.scheduler.comparison.quartz.domain.OrderOperationStatus
 import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobData
 import org.intellij.lang.annotations.Language
+import org.springframework.context.annotation.Profile
 import org.springframework.jdbc.core.simple.JdbcClient
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Propagation
@@ -11,8 +12,8 @@ import org.springframework.transaction.annotation.Transactional
 import java.sql.Types
 import java.time.LocalDateTime
 
-// Todo: queryForStream with Stream item processing (pageSize == fetchSize), maxCount == LIMIT.
 @Repository
+@Profile("pagination")
 class WildFruitOperationOnOrderRepository(
     private val jdbcClient: JdbcClient
 ) {
@@ -53,7 +54,7 @@ class WildFruitOperationOnOrderRepository(
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun readUnprocessedWithReadCountIncrement(
-        maxPageSize: Long,
+        maxPageSize: Int,
         orderJobData: DedicatedOrderJobData
     ): List<OperationOnOrder> {
         val updatedOrderStatuses = jdbcClient.sql(READ_UNPROCESSED_ORDER_OPERATIONS_SQL)

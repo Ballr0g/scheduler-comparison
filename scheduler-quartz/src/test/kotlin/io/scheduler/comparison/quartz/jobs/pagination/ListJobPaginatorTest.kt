@@ -28,7 +28,7 @@ class ListJobPaginatorTest {
         val testCommonOrderJobMetadata = CommonOrderJobMetadata(
             jobName = "test-job",
             jobCron = "0 */1 * * * ?",
-            pageSize = 1,
+            chunkSize = 1,
             maxCountPerExecution = 2
         )
 
@@ -95,14 +95,14 @@ class ListJobPaginatorTest {
     fun `Multiple pages for ListJobPaginator next() return expected value on first call`() {
         // given
         val jobPaginator = listJobPaginator(testCommonOrderJobData, testCommonOrderJobMetadata,
-            { pageSize, _ -> testOperationsOnOrder.take(pageSize.toInt()) }
+            { pageSize, _ -> testOperationsOnOrder.take(pageSize) }
         )
 
         // when
         val actualPage = jobPaginator.next()
 
         // then
-        assertEquals(testCommonOrderJobMetadata.pageSize, actualPage.size.toLong())
+        assertEquals(testCommonOrderJobMetadata.chunkSize, actualPage.size)
         assertEquals(testOperationOnOrder1, actualPage[0])
     }
 
@@ -134,7 +134,7 @@ class ListJobPaginatorTest {
         val actualSecondPage = jobPaginator.next()
 
         // then
-        assertEquals(testCommonOrderJobMetadata.pageSize, actualSecondPage.size.toLong())
+        assertEquals(testCommonOrderJobMetadata.chunkSize, actualSecondPage.size)
         assertEquals(testOperationOnOrder2, actualSecondPage[0])
     }
 
@@ -142,18 +142,18 @@ class ListJobPaginatorTest {
     fun `Page size does not exceed max entries count when more data available than queried via next()`() {
         // given
         val jobMetadataExcessivePageSize = testCommonOrderJobMetadata.copy(
-            pageSize = 2,
+            chunkSize = 2,
             maxCountPerExecution = 1
         )
         val jobPaginator = listJobPaginator(testCommonOrderJobData, jobMetadataExcessivePageSize,
-            { pageSize, _ -> testOperationsOnOrder.take(pageSize.toInt()) }
+            { pageSize, _ -> testOperationsOnOrder.take(pageSize) }
         )
 
         // when
         val actualPage = jobPaginator.next()
 
         // then
-        assertEquals(jobMetadataExcessivePageSize.maxCountPerExecution, actualPage.size.toLong())
+        assertEquals(jobMetadataExcessivePageSize.maxCountPerExecution, actualPage.size)
         assertEquals(testOperationOnOrder1, actualPage[0])
     }
 

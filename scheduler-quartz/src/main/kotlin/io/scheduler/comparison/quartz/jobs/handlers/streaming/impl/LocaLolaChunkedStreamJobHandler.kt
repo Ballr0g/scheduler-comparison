@@ -1,23 +1,23 @@
-package io.scheduler.comparison.quartz.jobs.handlers.impl
+package io.scheduler.comparison.quartz.jobs.handlers.streaming.impl
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.scheduler.comparison.quartz.domain.OrderRefund
-import io.scheduler.comparison.quartz.jobs.handlers.PaginatedJobHandlerBase
-import io.scheduler.comparison.quartz.jobs.pagination.impl.listJobPaginator
+import io.scheduler.comparison.quartz.jobs.JobHandlerNames
+import io.scheduler.comparison.quartz.jobs.handlers.streaming.ChunkedStreamJobHandlerBase
 import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobData
 import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobMetadata
 import io.scheduler.comparison.quartz.messaging.LocaLolaRefundsSender
-import io.scheduler.comparison.quartz.repositories.LocaLolaFailuresRepository
+import io.scheduler.comparison.quartz.repositories.streaming.LocaLolaStreamingFailuresRepository
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
-@Component
-@Profile("pagination")
-class LocaLolaDedicatedJobHandler(
-    private val locaLolaFailuresRepository: LocaLolaFailuresRepository,
+@Profile("streaming")
+@Component(JobHandlerNames.LOCA_LOLA_DEDICATED_JOB_HANDLER)
+class LocaLolaChunkedStreamJobHandler(
+    private val locaLolaFailuresRepository: LocaLolaStreamingFailuresRepository,
     private val locaLolaRefundsSender: LocaLolaRefundsSender,
-) : PaginatedJobHandlerBase<DedicatedOrderJobData, DedicatedOrderJobMetadata, OrderRefund>() {
+) : ChunkedStreamJobHandlerBase<DedicatedOrderJobData, DedicatedOrderJobMetadata, OrderRefund>() {
 
     private companion object {
         private val log = KotlinLogging.logger {}
@@ -30,22 +30,20 @@ class LocaLolaDedicatedJobHandler(
         super.executeInternal(orderJobData, orderJobMetadata)
     }
 
-    override fun handleNextPage(page: List<OrderRefund>) {
-        locaLolaRefundsSender.sendAllRefunds(page)
 
-        val refundIds = page.asSequence()
+    override fun openDataStream(orderJobData: DedicatedOrderJobData, orderJobMetadata: DedicatedOrderJobMetadata
+    ) = locaLolaFailuresRepository.readAvailableOrderRefunds(
+        orderJobData = orderJobData,
+        orderJobMetadata = orderJobMetadata,
+    )
+
+    override fun handleNextChunk(chunk: List<OrderRefund>) {
+        locaLolaRefundsSender.sendAllRefunds(chunk)
+
+        val refundIds = chunk.asSequence()
             .map { it.id }
             .toSet()
         locaLolaFailuresRepository.closeEligibleForRefunds(refundIds)
     }
-
-    override fun paginator(
-        jobData: DedicatedOrderJobData,
-        jobMetadata: DedicatedOrderJobMetadata
-    ) = listJobPaginator(
-        jobData = jobData,
-        jobMetadata = jobMetadata,
-        pageExtractor = locaLolaFailuresRepository::readAvailableOrderRefunds
-    )
 
 }

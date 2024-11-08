@@ -63,8 +63,8 @@ class CommonOrderJob : Job {
             = CommonOrderJobMetadata(
         jobName = jobDataMap.getString(CommonOrderJobParams.JOB_NAME.value),
         jobCron = jobDataMap.getString(CommonOrderJobParams.JOB_CRON.value),
-        pageSize = jobDataMap.getLong(CommonOrderJobParams.PAGE_SIZE.value),
-        maxCountPerExecution = jobDataMap.getLong(CommonOrderJobParams.MAX_COUNT_PER_EXECUTION.value),
+        chunkSize = jobDataMap.getInt(CommonOrderJobParams.PAGE_SIZE.value),
+        maxCountPerExecution = jobDataMap.getInt(CommonOrderJobParams.MAX_COUNT_PER_EXECUTION.value),
     )
 
 }

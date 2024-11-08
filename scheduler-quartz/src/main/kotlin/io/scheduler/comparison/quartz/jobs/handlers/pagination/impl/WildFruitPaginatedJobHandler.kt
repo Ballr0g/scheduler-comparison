@@ -1,28 +1,24 @@
-package io.scheduler.comparison.quartz.jobs.handlers.impl
+package io.scheduler.comparison.quartz.jobs.handlers.pagination.impl
 
-import io.github.oshai.kotlinlogging.KotlinLogging
 import io.scheduler.comparison.quartz.domain.OperationOnOrder
 import io.scheduler.comparison.quartz.domain.OrderStatus
-import io.scheduler.comparison.quartz.jobs.handlers.PaginatedJobHandlerBase
+import io.scheduler.comparison.quartz.jobs.JobHandlerNames
+import io.scheduler.comparison.quartz.jobs.handlers.pagination.PaginatedJobHandlerBase
 import io.scheduler.comparison.quartz.jobs.pagination.impl.listJobPaginator
 import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobData
 import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobMetadata
 import io.scheduler.comparison.quartz.messaging.NotificationPlatformSender
-import io.scheduler.comparison.quartz.repositories.WildFruitOperationOnOrderRepository
+import io.scheduler.comparison.quartz.repositories.pagination.WildFruitOperationOnOrderRepository
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
-@Component
 @Profile("pagination")
-class WildFruitDedicatedJobHandler(
+@Component(JobHandlerNames.WILD_FRUIT_DEDICATED_JOB_HANDLER)
+class WildFruitPaginatedJobHandler(
     private val operationOnOrderRepository: WildFruitOperationOnOrderRepository,
     private val notificationPlatformSender: NotificationPlatformSender,
 ) : PaginatedJobHandlerBase<DedicatedOrderJobData, DedicatedOrderJobMetadata, OperationOnOrder>() {
-
-    private companion object {
-        private val log = KotlinLogging.logger {}
-    }
 
     @Transactional
     override fun executeInternal(
@@ -44,6 +40,8 @@ class WildFruitDedicatedJobHandler(
         operationOnOrderRepository.markOrderOperationsAsProcessed(updatedIds)
     }
 
+    @Suppress("DuplicatedCode")
+    // There are similar handlers for different profiles never intersecting, we're not concerned by duplication.
     private fun filteredOutCancellations(page: List<OperationOnOrder>): List<OperationOnOrder> {
         val cancellations = page.asSequence()
             .filter { it.orderStatus == OrderStatus.CANCELLED }

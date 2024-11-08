@@ -1,13 +1,14 @@
-package io.scheduler.comparison.quartz.jobs.handlers
+package io.scheduler.comparison.quartz.jobs.handlers.pagination
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.scheduler.comparison.quartz.jobs.state.PaginatedJobMetadata
+import io.scheduler.comparison.quartz.jobs.state.ChunkedJobMetadata
 import org.springframework.transaction.annotation.Transactional
 
-abstract class PaginatedJobHandlerBase<T, V : PaginatedJobMetadata, K> : PaginatedJobHandler<T, V, K> {
+abstract class PaginatedJobHandlerBase<T, V : ChunkedJobMetadata, K> : PaginatedJobHandler<T, V, K> {
 
     protected companion object {
-        private val log = KotlinLogging.logger {}
+        @JvmStatic
+        protected val log = KotlinLogging.logger {}
     }
 
     @Transactional

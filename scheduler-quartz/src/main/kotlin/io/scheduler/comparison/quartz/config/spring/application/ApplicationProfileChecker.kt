@@ -20,7 +20,7 @@ class ApplicationProfileChecker(
         log.info { "Starting scheduler quartz for comparison with profiles: ${environment.activeProfiles.toList()}" }
         checkJobStorageProfiles()
         checkPageHandlingModeProfiles()
-        checkSchedulerClusteringProfiles()
+        checkSchedulerClusteredProfiles()
     }
 
     fun checkJobStorageProfiles() {
@@ -47,20 +47,20 @@ class ApplicationProfileChecker(
         }
     }
 
-    fun checkSchedulerClusteringProfiles() {
-        check(environment.acceptsProfiles(Profiles.of("!(clustering & persistent)"))) {
-            throw IllegalStateException("\"clustering\" profile requires \"persistent\" because a persistent "
+    fun checkSchedulerClusteredProfiles() {
+        check(environment.acceptsProfiles(Profiles.of("!clustered | (clustered & persistent)"))) {
+            throw IllegalStateException("\"clustered\" profile requires \"persistent\" because a persistent "
                     + "datasource is mandatory for running scheduling in cluster mode")
         }
 
-        check (environment.acceptsProfiles(Profiles.of("!(standalone & clustering)"))) {
-            throw IllegalStateException("Both \"standalone\" and \"clustering\" profiles cannot be present at the same time, "
+        check (environment.acceptsProfiles(Profiles.of("!(standalone & clustered)"))) {
+            throw IllegalStateException("Both \"standalone\" and \"clustered\" profiles cannot be present at the same time, "
                     + "choose \"standalone\" running the scheduling using a single replica or " +
-                    " \"clustering\" for support of multiple instances.")
+                    " \"clustered\" for support of multiple instances.")
         }
 
-        check (environment.acceptsProfiles(Profiles.of("standalone | clustering"))) {
-            throw IllegalStateException("At least one profile (either \"standalone\" or \"clustering\") must be present "
+        check (environment.acceptsProfiles(Profiles.of("standalone | clustered"))) {
+            throw IllegalStateException("At least one profile (either \"standalone\" or \"clustered\") must be present "
                     + "because this defines the behavior of replicas (single replica or multiple instances in a cluster).")
         }
     }

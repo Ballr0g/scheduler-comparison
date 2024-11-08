@@ -1,9 +1,10 @@
-package io.scheduler.comparison.quartz.repositories
+package io.scheduler.comparison.quartz.repositories.pagination
 
 import io.scheduler.comparison.quartz.domain.OperationOnOrder
 import io.scheduler.comparison.quartz.domain.OrderOperationStatus
 import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobData
 import org.intellij.lang.annotations.Language
+import org.springframework.context.annotation.Profile
 import org.springframework.jdbc.core.simple.JdbcClient
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Propagation
@@ -11,8 +12,8 @@ import org.springframework.transaction.annotation.Transactional
 import java.sql.Types
 import java.time.LocalDateTime
 
-// Todo: queryForStream with Stream item processing (pageSize == fetchSize), maxCount == LIMIT.
 @Repository
+@Profile("pagination")
 class CommonOperationOnOrderRepository(
     private val jdbcClient: JdbcClient
 ) {
@@ -25,13 +26,13 @@ class CommonOperationOnOrderRepository(
                 FROM scheduler_quartz.order_statuses
                 WHERE
                     operation_status IN ('READY_FOR_PROCESSING', 'FOR_RETRY')
-                    AND merchant_id NOT IN (:excludedMerchantIds)
+                    -- Support for empty excludedMerchantIds
+                    AND NOT (merchant_id = ANY(:excludedMerchantIds))
                     AND order_statuses.order_status IN (:orderStatuses)
                 LIMIT :maxPageSize
                 FOR UPDATE SKIP LOCKED
         """
 
-        // Todo: independently execute update after Kafka + limit max page size
         @Language("PostgreSQL")
         const val INCREASE_UNPROCESSED_ORDER_OPERATION_READ_COUNT_SQL = """
             UPDATE scheduler_quartz.order_statuses
@@ -53,12 +54,12 @@ class CommonOperationOnOrderRepository(
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun readUnprocessedWithReadCountIncrement(
-        maxPageSize: Long,
+        maxPageSize: Int,
         orderJobData: CommonOrderJobData
     ): List<OperationOnOrder> {
         val updatedOrderStatuses = jdbcClient.sql(READ_UNPROCESSED_ORDER_OPERATIONS_FOR_UPDATE_SQL)
             .param("maxPageSize", maxPageSize)
-            .param("excludedMerchantIds", orderJobData.excludedMerchantIds)
+            .param("excludedMerchantIds", orderJobData.excludedMerchantIds.toTypedArray())
             .param("orderStatuses", orderJobData.orderStatuses.asSequence().map { it.value }.toSet())
             .query(OperationOnOrder::class.java)
             .list()

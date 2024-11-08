@@ -27,17 +27,19 @@ data class StaticOrderJobProperties(
         val cron: String,
         @field:Min(1)
         @field:Max(1000)
-        val pageSize: Long,
+        val pageSize: Int,
         @field:Min(1)
         @field:Max(1000)
-        val maxCountPerExecution: Long,
+        val maxCountPerExecution: Int,
     )
 
     @Validated
     data class StaticDedicatedMerchantsOrderJob(
         @field:NotBlank
         val name: String,
+        @field:Size(min = 1, max = 1000)
         val merchantIds: List<Long>,
+        @field:Size(min = 1, max = 1000)
         val orderStatuses: List<OrderStatus>,
         @field:NotBlank
         val cron: String,
@@ -46,10 +48,10 @@ data class StaticOrderJobProperties(
         val jobHandler: String = "dedicatedJobHandler",
         @field:Min(1)
         @field:Max(1000)
-        val pageSize: Long,
+        val pageSize: Int,
         @field:Min(1)
         @field:Max(1000)
-        val maxCountPerExecution: Long,
+        val maxCountPerExecution: Int,
     )
 
 }
