@@ -3,12 +3,11 @@ package io.scheduler.comparison.quartz.repositories.streaming
 import io.scheduler.comparison.quartz.domain.OrderRefund
 import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobData
 import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobMetadata
+import io.scheduler.comparison.quartz.repositories.DomainRowMappers.orderRefundRowMapper
 import org.intellij.lang.annotations.Language
 import org.springframework.context.annotation.Profile
-import org.springframework.jdbc.core.RowMapper
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
-import java.util.*
 import java.util.stream.Stream
 
 @Repository
@@ -38,15 +37,6 @@ class LocaLolaStreamingFailuresRepository(
             SET eligible_for_refund = false
             WHERE id IN (:refundIds)
         """
-
-        val orderRefundRowMapper = RowMapper { rs, _ ->
-            OrderRefund(
-                id = rs.getLong("id"),
-                orderId = rs.getObject("order_id", UUID::class.java),
-                merchantId = rs.getLong("merchant_id"),
-                eligibleForRefund = rs.getBoolean("eligible_for_refund"),
-            )
-        }
 
     }
 

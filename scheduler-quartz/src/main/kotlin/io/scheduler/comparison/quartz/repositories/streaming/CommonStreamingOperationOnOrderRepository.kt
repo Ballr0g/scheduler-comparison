@@ -2,16 +2,14 @@ package io.scheduler.comparison.quartz.repositories.streaming
 
 import io.scheduler.comparison.quartz.domain.OperationOnOrder
 import io.scheduler.comparison.quartz.domain.OrderOperationStatus
-import io.scheduler.comparison.quartz.domain.OrderStatus
 import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobData
 import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobMetadata
+import io.scheduler.comparison.quartz.repositories.DomainRowMappers.operationOnOrderRowMapper
 import org.intellij.lang.annotations.Language
 import org.springframework.context.annotation.Profile
-import org.springframework.jdbc.core.RowMapper
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
 import java.time.LocalDateTime
-import java.util.UUID
 import java.util.stream.Stream
 
 @Repository
@@ -57,17 +55,6 @@ class CommonStreamingOperationOnOrderRepository(
             WHERE id IN (:ids)
         """
 
-        val operationOnOrderRowMapper = RowMapper { rs, _ ->
-            OperationOnOrder(
-                id = rs.getLong("id"),
-                orderId = rs.getObject("order_id", UUID::class.java),
-                merchantId = rs.getLong("merchant_id"),
-                statusChangeTime = rs.getTimestamp("status_change_time").toLocalDateTime(),
-                orderOperationStatus = OrderOperationStatus.valueOf(rs.getString("order_operation_status")),
-                recordReadCount = rs.getLong("record_read_count"),
-                orderStatus = OrderStatus.valueOf(rs.getString("order_status")),
-            )
-        }
     }
 
     fun readUnprocessedOperations(
