@@ -40,8 +40,8 @@ class CommonStreamingJobHandler(
     ) {
         operationOnOrderStream.use {
             it.asSequence()
-                .take(orderJobMetadata.maxCountPerExecution.toInt())
-                .chunked(orderJobMetadata.pageSize.toInt())
+                .take(orderJobMetadata.maxCountPerExecution)
+                .chunked(orderJobMetadata.pageSize)
                 .forEach { chunk -> handleNextChunk(chunk) }
         }
     }

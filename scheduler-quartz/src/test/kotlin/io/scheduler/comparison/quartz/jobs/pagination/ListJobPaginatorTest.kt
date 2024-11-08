@@ -95,14 +95,14 @@ class ListJobPaginatorTest {
     fun `Multiple pages for ListJobPaginator next() return expected value on first call`() {
         // given
         val jobPaginator = listJobPaginator(testCommonOrderJobData, testCommonOrderJobMetadata,
-            { pageSize, _ -> testOperationsOnOrder.take(pageSize.toInt()) }
+            { pageSize, _ -> testOperationsOnOrder.take(pageSize) }
         )
 
         // when
         val actualPage = jobPaginator.next()
 
         // then
-        assertEquals(testCommonOrderJobMetadata.pageSize, actualPage.size.toLong())
+        assertEquals(testCommonOrderJobMetadata.pageSize, actualPage.size)
         assertEquals(testOperationOnOrder1, actualPage[0])
     }
 
@@ -134,7 +134,7 @@ class ListJobPaginatorTest {
         val actualSecondPage = jobPaginator.next()
 
         // then
-        assertEquals(testCommonOrderJobMetadata.pageSize, actualSecondPage.size.toLong())
+        assertEquals(testCommonOrderJobMetadata.pageSize, actualSecondPage.size)
         assertEquals(testOperationOnOrder2, actualSecondPage[0])
     }
 
@@ -146,14 +146,14 @@ class ListJobPaginatorTest {
             maxCountPerExecution = 1
         )
         val jobPaginator = listJobPaginator(testCommonOrderJobData, jobMetadataExcessivePageSize,
-            { pageSize, _ -> testOperationsOnOrder.take(pageSize.toInt()) }
+            { pageSize, _ -> testOperationsOnOrder.take(pageSize) }
         )
 
         // when
         val actualPage = jobPaginator.next()
 
         // then
-        assertEquals(jobMetadataExcessivePageSize.maxCountPerExecution, actualPage.size.toLong())
+        assertEquals(jobMetadataExcessivePageSize.maxCountPerExecution, actualPage.size)
         assertEquals(testOperationOnOrder1, actualPage[0])
     }
 

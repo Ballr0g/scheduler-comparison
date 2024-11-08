@@ -38,7 +38,7 @@ class LocaLolaFailuresRepository(
     }
 
     fun readAvailableOrderRefunds(
-        maxPageSize: Long,
+        maxPageSize: Int,
         orderJobData: DedicatedOrderJobData
     ): List<OrderRefund>
         = jdbcClient.sql(READ_FAILURES_FOR_REFUND_SQL)

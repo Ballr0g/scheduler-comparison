@@ -54,7 +54,7 @@ class CommonOperationOnOrderRepository(
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun readUnprocessedWithReadCountIncrement(
-        maxPageSize: Long,
+        maxPageSize: Int,
         orderJobData: CommonOrderJobData
     ): List<OperationOnOrder> {
         val updatedOrderStatuses = jdbcClient.sql(READ_UNPROCESSED_ORDER_OPERATIONS_FOR_UPDATE_SQL)

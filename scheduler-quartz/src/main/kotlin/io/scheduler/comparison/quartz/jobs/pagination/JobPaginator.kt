@@ -6,6 +6,6 @@ interface JobPaginator<out T , out V : PaginatedJobMetadata, K> : Iterator<List<
 
     val jobData: T
     val jobMetadata: V
-    val pageSize: Long
+    val pageSize: Int
 
 }

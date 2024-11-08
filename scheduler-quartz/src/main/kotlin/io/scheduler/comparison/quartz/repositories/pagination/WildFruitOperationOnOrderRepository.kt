@@ -54,7 +54,7 @@ class WildFruitOperationOnOrderRepository(
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun readUnprocessedWithReadCountIncrement(
-        maxPageSize: Long,
+        maxPageSize: Int,
         orderJobData: DedicatedOrderJobData
     ): List<OperationOnOrder> {
         val updatedOrderStatuses = jdbcClient.sql(READ_UNPROCESSED_ORDER_OPERATIONS_SQL)

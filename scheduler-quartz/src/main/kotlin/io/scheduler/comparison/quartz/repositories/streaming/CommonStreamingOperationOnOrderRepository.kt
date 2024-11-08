@@ -77,7 +77,7 @@ class CommonStreamingOperationOnOrderRepository(
         mapOf(
             "excludedMerchantIds" to orderJobData.excludedMerchantIds.toTypedArray(),
             "orderStatuses" to orderJobData.orderStatuses.asSequence().map { it.value }.toSet(),
-            "maxCount" to orderJobMetadata.maxCountPerExecution.toInt(),
+            "maxCount" to orderJobMetadata.maxCountPerExecution,
         ), operationOnOrderRowMapper
     )
 

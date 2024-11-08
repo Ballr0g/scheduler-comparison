@@ -27,10 +27,10 @@ data class StaticOrderJobProperties(
         val cron: String,
         @field:Min(1)
         @field:Max(1000)
-        val pageSize: Long,
+        val pageSize: Int,
         @field:Min(1)
         @field:Max(1000)
-        val maxCountPerExecution: Long,
+        val maxCountPerExecution: Int,
     )
 
     @Validated
@@ -48,10 +48,10 @@ data class StaticOrderJobProperties(
         val jobHandler: String = "dedicatedJobHandler",
         @field:Min(1)
         @field:Max(1000)
-        val pageSize: Long,
+        val pageSize: Int,
         @field:Min(1)
         @field:Max(1000)
-        val maxCountPerExecution: Long,
+        val maxCountPerExecution: Int,
     )
 
 }
