@@ -46,8 +46,13 @@ spring:
 
 org:
   jobrunr:
+    jobs:
+      default-number-of-retries: 0
     background-job-server:
       enabled: true
+      metrics:
+        enabled: true
+      thread-type: platformthreads
     dashboard:
       enabled: true
     miscellaneous:
@@ -96,6 +101,11 @@ spring:
   config:
     activate:
       on-profile: ram
+
+org:
+  jobrunr:
+    database:
+      skip-create: true
 
 ---
 spring:
