@@ -39,6 +39,9 @@ dependencies {
     // Kotlin logging.
     implementation("io.github.oshai:kotlin-logging:${kotlinLoggingVersion}")
     implementation("org.hibernate.validator:hibernate-validator")
+    // Jackson
+    implementation("com.fasterxml.jackson.core:jackson-databind")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
 
 
     // --> Test Implementation Dependencies <--
