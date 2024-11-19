@@ -22,6 +22,8 @@ data class StaticOrderJobProperties(
         @field:Size(min = 1, max = 1000)
         val orderStatuses: List<OrderStatus>,
         @field:NotBlank
+        val jobHandler: String = "commonJobHandler",
+        @field:NotBlank
         val cron: String,
         @field:Min(1)
         @field:Max(1000)
@@ -42,6 +44,8 @@ data class StaticOrderJobProperties(
         @field:NotBlank
         val cron: String,
         val ignoredByCommon: Boolean = true,
+        @field:NotBlank
+        val jobHandler: String,
         @field:Min(1)
         @field:Max(1000)
         val pageSize: Int,
