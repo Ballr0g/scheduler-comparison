@@ -67,7 +67,6 @@ scheduler:
   jobs:
     dedicated-merchant-jobs:
       - name: "Loca-Lola failure refunds"
-        job-handler: locaLolaDedicatedJobHandler
         merchant-ids: [4]
         order-statuses: [FAILED]
         cron: "0 */1 * * * *"
@@ -76,7 +75,6 @@ scheduler:
         max-count-per-execution: 30
         page-size: 10
       - name: "WildFruit handler"
-        job-handler: wildFruitDedicatedJobHandler
         merchant-ids: [5]
         order-statuses: [PAID, DELIVERED, FAILED, CANCELLED]
         cron: "0 */1 * * * *"
@@ -84,7 +82,6 @@ scheduler:
         page-size: 10
     common-merchant-jobs:
       - name: "default"
-        job-handler: commonJobHandler
         order-statuses: [PAID, DELIVERED, FAILED, CANCELLED]
         cron: "0 */1 * * * *"
         max-count-per-execution: 30
