@@ -1,6 +1,5 @@
 package io.scheduler.comparison.quartz.jobs
 
-// Todo: consider reusing the idea of JobRunr serializable "JobRequest" and use them instead of raw properties.
 /**
  * Used as a stronger formal contract to match parameter naming during putting params to org.quartz.JobDataMap and
  * extracting back from job context.
@@ -8,13 +7,8 @@ package io.scheduler.comparison.quartz.jobs
 enum class DedicatedOrderJobParams(
     val value: String,
 ) {
-    JOB_NAME("name"),
-    MERCHANT_IDS("merchantIds"),
-    ORDER_STATUSES("orderStatuses"),
-    JOB_CRON("cron"),
-    PAGE_SIZE("pageSize"),
-    MAX_COUNT_PER_EXECUTION("maxCountPerExecution"),
     JOB_HANDLER("jobHandler"),
+    JOB_STATE("jobState"),
 }
 
 /**
@@ -24,13 +18,8 @@ enum class DedicatedOrderJobParams(
 enum class CommonOrderJobParams(
     val value: String,
 ) {
-    JOB_NAME("name"),
-    EXCLUDED_MERCHANT_IDS("excludedMerchantIds"),
-    ORDER_STATUSES("orderStatuses"),
-    JOB_CRON("cron"),
-    PAGE_SIZE("pageSize"),
-    MAX_COUNT_PER_EXECUTION("maxCountPerExecution"),
     JOB_HANDLER("jobHandler"),
+    JOB_STATE("jobState"),
 }
 
 object JobHandlerNames {

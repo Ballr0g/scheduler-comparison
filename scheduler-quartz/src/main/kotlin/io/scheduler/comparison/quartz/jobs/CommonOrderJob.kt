@@ -1,11 +1,7 @@
 package io.scheduler.comparison.quartz.jobs
 
-import io.scheduler.comparison.quartz.domain.OrderStatus
 import io.scheduler.comparison.quartz.jobs.handlers.JobHandler
-import io.scheduler.comparison.quartz.jobs.state.data.impl.CommonOrderJobData
-import io.scheduler.comparison.quartz.jobs.state.data.impl.CommonOrderJobMetadata
 import io.scheduler.comparison.quartz.jobs.state.impl.CommonJobState
-import org.quartz.Job
 import org.quartz.JobDataMap
 import org.quartz.JobExecutionContext
 import org.quartz.JobExecutionException
@@ -16,59 +12,30 @@ import org.springframework.stereotype.Component
  * A general-purpose job execution class that works with all merchants except for those used for dedicated jobs.
  */
 @Component
-class CommonOrderJob : Job {
+class CommonOrderJob : HandlerAwareJob<CommonJobState> {
     @Autowired
     private lateinit var jobHandlers: Map<String, JobHandler<CommonJobState>>
 
-    private lateinit var orderJobState: CommonJobState
-    private lateinit var jobHandler: JobHandler<CommonJobState>
-
     override fun execute(context: JobExecutionContext) {
         try {
-            initJobState(context)
-            jobHandler.executeInternal(orderJobState)
+            val jobDataMap = context.jobDetail.jobDataMap
+            val jobState = retrieveJobState(jobDataMap)
+            val jobHandler = retrieveJobHandlerByKey(jobDataMap.getString(CommonOrderJobParams.JOB_HANDLER.value))
+
+            jobHandler.executeInternal(jobState)
         } catch (e: Exception) {
             throw JobExecutionException(e)
         }
     }
 
-    /**
-     * Since Quartz jobs are stateless by design and use reflection (via a parameterless constructor) for instantiation
-     * there's no proper way to initialize val properties or directly use Spring DI without customizing
-     * SpringBeanJobFactory with AutowireCapableBeanFactory.
-     *
-     * In this case the necessary values are passed manually without Spring customization via JobExecutionContext,
-     * including Spring beans.
-     */
-    private fun initJobState(context: JobExecutionContext) {
-        val jobDataMap = context.jobDetail.jobDataMap
+    override fun retrieveJobState(jobDataMap: JobDataMap)
+        = jobDataMap[CommonOrderJobParams.JOB_STATE.value] as? CommonJobState
+            ?: throw IllegalStateException("Unable to deserialize CommonJobState by key: "
+                    + CommonOrderJobParams.JOB_STATE.value)
 
-        val jobHandlerKey = jobDataMap.getString(CommonOrderJobParams.JOB_HANDLER.value)
-        jobHandler = jobHandlers[jobHandlerKey]
-            ?: throw IllegalArgumentException("Unsupported jobHandler=${jobHandlerKey}, " +
-                    "available options: ${jobHandlers.keys}")
-        orderJobState = buildJobState(jobDataMap)
-    }
-
-    private fun buildJobState(jobDataMap: JobDataMap) = CommonJobState(
-        jobData = buildJobData(jobDataMap),
-        jobMetadata = buildJobMetadata(jobDataMap)
-    )
-
-    private fun buildJobData(jobDataMap: JobDataMap)
-            = @Suppress("UNCHECKED_CAST") (CommonOrderJobData(
-        excludedMerchantIds = (jobDataMap[CommonOrderJobParams.EXCLUDED_MERCHANT_IDS.value] as? List<Long>)?.toSet()
-            ?: throw IllegalArgumentException("merchantIds of invalid types"),
-        orderStatuses = (jobDataMap[CommonOrderJobParams.ORDER_STATUSES.value] as? List<OrderStatus>)?.toSet()
-            ?: throw IllegalArgumentException("orderStatuses of invalid types"),
-    ))
-
-    private fun buildJobMetadata(jobDataMap: JobDataMap)
-            = CommonOrderJobMetadata(
-        jobName = jobDataMap.getString(CommonOrderJobParams.JOB_NAME.value),
-        jobCron = jobDataMap.getString(CommonOrderJobParams.JOB_CRON.value),
-        chunkSize = jobDataMap.getInt(CommonOrderJobParams.PAGE_SIZE.value),
-        maxCountPerExecution = jobDataMap.getInt(CommonOrderJobParams.MAX_COUNT_PER_EXECUTION.value),
-    )
+    override fun retrieveJobHandlerByKey(jobKey: String)
+        = jobHandlers[jobKey]
+            ?: throw IllegalStateException("Unsupported jobHandler=${jobKey}, " +
+                "available options: ${jobHandlers.keys}")
 
 }
