@@ -3,6 +3,7 @@ package io.scheduler.comparison.jobrunr.messaging
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.scheduler.comparison.jobrunr.config.properties.KafkaTopics
 import io.scheduler.comparison.jobrunr.domain.OperationOnOrder
+import io.scheduler.comparison.jobrunr.domain.OrderRefund
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Component
 import java.util.concurrent.CompletableFuture
@@ -17,22 +18,38 @@ class NotificationPlatformSender(
         val log = KotlinLogging.logger {}
     }
 
-    // Todo: throw custom exception if Kafka gives up
-    fun sendAllOperationsOnOrder(operations: List<OperationOnOrder>): CompletableFuture<*> {
-        // Todo: match batch size of actual Kafka batch on the KafkaTemplate
+    fun sendOperationsOnOrder(operations: Collection<OperationOnOrder>) = send(
+        topic = SupportedKafkaTopics.NOTIFICATION_PLATFORM,
+        messages = operations,
+        onSuccess = { orders -> log.info { "Successfully sent ${orders.size} operations on order to Notification platform" } },
+        onError = { throwable -> log.warn { "Failed sending operations on order to Notification platform, cause: ${throwable.message}" } }
+    )
 
-        val targetTopic = kafkaTopics.topics[SupportedKafkaTopics.NOTIFICATION_PLATFORM.value]
-            ?: throw IllegalArgumentException("Non-existent topic: ${SupportedKafkaTopics.NOTIFICATION_PLATFORM.value}, "
+    fun sendOrderRefunds(orderRefunds: Collection<OrderRefund>) = send(
+        topic = SupportedKafkaTopics.LOCA_LOLA_REFUNDS,
+        messages = orderRefunds,
+        onSuccess = { messages -> log.info { "Successfully sent ${messages.size} Loca-Lola refunds" } },
+        onError = { throwable -> log.warn { "Failed sending Loca-Lola refunds, cause: ${throwable.message}" } },
+    )
+
+    private fun <T> send(
+        topic: SupportedKafkaTopics,
+        messages: Collection<T>,
+        onSuccess: ((messages: Collection<T>) -> Unit)? = null,
+        onError: ((error: Throwable) -> Unit)? = null,
+    ): CompletableFuture<*> {
+        val targetTopic = kafkaTopics.topics[topic.value]
+            ?: throw IllegalArgumentException("Non-existent topic: ${topic.value}, "
                     + "available: ${kafkaTopics.topics}")
 
-        return CompletableFuture.allOf(*operations.asSequence()
+        return CompletableFuture.allOf(*messages.asSequence()
             .map{ kafkaTemplate.send(targetTopic, it) }
             .toList().toTypedArray()
         ).whenComplete { _, throwable ->
             if (throwable == null) {
-                log.info { "Successfully sent ${operations.size} operations on order to Notification platform" }
+                onSuccess?.invoke(messages)
             } else {
-                log.warn { "Failed sending operations on order to Notification platform, cause: ${throwable.message}" }
+                onError?.invoke(throwable)
             }
         }
     }

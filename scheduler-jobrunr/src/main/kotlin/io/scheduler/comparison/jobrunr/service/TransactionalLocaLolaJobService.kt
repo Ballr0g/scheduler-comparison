@@ -2,11 +2,11 @@ package io.scheduler.comparison.jobrunr.service
 
 import arrow.core.Either
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.scheduler.comparison.jobrunr.domain.OperationOnOrder
+import io.scheduler.comparison.jobrunr.domain.OrderRefund
 import io.scheduler.comparison.jobrunr.jobs.pagination.JobPaginator
-import io.scheduler.comparison.jobrunr.jobs.state.impl.CommonJobState
+import io.scheduler.comparison.jobrunr.jobs.state.impl.DedicatedJobState
 import io.scheduler.comparison.jobrunr.messaging.NotificationPlatformSender
-import io.scheduler.comparison.jobrunr.repositories.pagination.CommonOperationOnOrderRepository
+import io.scheduler.comparison.jobrunr.repositories.pagination.LocaLolaFailuresRepository
 import org.apache.kafka.common.KafkaException
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
@@ -15,17 +15,20 @@ import java.util.concurrent.TimeUnit
 
 @Component
 @Profile("pagination")
-class TransactionalCommonJobService(
-    private val operationOnOrderRepository: CommonOperationOnOrderRepository,
+class TransactionalLocaLolaJobService(
+    private val locaLolaFailuresRepository: LocaLolaFailuresRepository,
     private val notificationPlatformSender: NotificationPlatformSender,
 ) {
+
     private companion object {
         private val log = KotlinLogging.logger {}
         const val MAX_KAFKA_WAIT_SECONDS = 5L
     }
 
     @Transactional
-    fun handleNextPage(paginator: JobPaginator<CommonJobState, OperationOnOrder>): Either<KafkaException, List<OperationOnOrder>> {
+    fun processPageTransactionally(
+        paginator: JobPaginator<DedicatedJobState, OrderRefund>
+    ): Either<KafkaException, List<OrderRefund>> {
         if (!paginator.hasNext()) {
             return Either.Right(emptyList())
         }
@@ -33,15 +36,14 @@ class TransactionalCommonJobService(
         val page = paginator.next()
         val updatedEntries = page.asSequence().map { it.id }.toSet()
         try {
-            notificationPlatformSender.sendOperationsOnOrder(page)[MAX_KAFKA_WAIT_SECONDS, TimeUnit.SECONDS]
-            return Either.Right(operationOnOrderRepository.updateOrderOperationsOnSuccess(updatedEntries))
+            notificationPlatformSender.sendOrderRefunds(page)[MAX_KAFKA_WAIT_SECONDS, TimeUnit.SECONDS]
+            return Either.Right(locaLolaFailuresRepository.closeEligibleForRefunds(updatedEntries))
         } catch (e: Exception) {
-            log.warn { "Job failed with error: ${e.message}" }
-            operationOnOrderRepository.updateOrderOperationsOnFailure(updatedEntries)
+            log.warn { "Job page processing failed with error: ${e.message}" }
             return Either.Left(KafkaException("Job failed with error: ${e.message}", e))
         }
     }
 
-    fun persistentOrderExtractor() = operationOnOrderRepository::readUnprocessedOrders
+    fun persistentRefundExtractor() = locaLolaFailuresRepository::readAvailableOrderRefunds
 
 }
