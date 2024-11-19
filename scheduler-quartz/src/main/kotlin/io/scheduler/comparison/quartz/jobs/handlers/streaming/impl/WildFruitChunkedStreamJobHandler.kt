@@ -4,8 +4,8 @@ import io.scheduler.comparison.quartz.domain.OperationOnOrder
 import io.scheduler.comparison.quartz.domain.OrderStatus
 import io.scheduler.comparison.quartz.jobs.JobHandlerNames
 import io.scheduler.comparison.quartz.jobs.handlers.streaming.ChunkedStreamJobHandlerBase
-import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobData
-import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobMetadata
+import io.scheduler.comparison.quartz.jobs.state.data.impl.DedicatedOrderJobData
+import io.scheduler.comparison.quartz.jobs.state.data.impl.DedicatedOrderJobMetadata
 import io.scheduler.comparison.quartz.messaging.NotificationPlatformSender
 import io.scheduler.comparison.quartz.repositories.streaming.WildFruitStreamingOperationOnOrderRepository
 import org.springframework.context.annotation.Profile

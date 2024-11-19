@@ -1,7 +1,7 @@
 package io.scheduler.comparison.quartz.jobs.handlers.streaming
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.scheduler.comparison.quartz.jobs.state.ChunkedJobMetadata
+import io.scheduler.comparison.quartz.jobs.state.data.ChunkedJobMetadata
 import org.springframework.transaction.annotation.Transactional
 import java.util.stream.Stream
 import kotlin.streams.asSequence

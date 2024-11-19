@@ -1,4 +1,4 @@
-package io.scheduler.comparison.quartz.jobs.state
+package io.scheduler.comparison.quartz.jobs.state.data
 
 interface CronJobMetadata : JobMetadata {
 

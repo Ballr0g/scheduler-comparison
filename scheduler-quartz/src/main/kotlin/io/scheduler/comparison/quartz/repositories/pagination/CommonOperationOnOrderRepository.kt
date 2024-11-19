@@ -2,7 +2,7 @@ package io.scheduler.comparison.quartz.repositories.pagination
 
 import io.scheduler.comparison.quartz.domain.OperationOnOrder
 import io.scheduler.comparison.quartz.domain.OrderOperationStatus
-import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobData
+import io.scheduler.comparison.quartz.jobs.state.data.impl.CommonOrderJobData
 import org.intellij.lang.annotations.Language
 import org.springframework.context.annotation.Profile
 import org.springframework.jdbc.core.simple.JdbcClient

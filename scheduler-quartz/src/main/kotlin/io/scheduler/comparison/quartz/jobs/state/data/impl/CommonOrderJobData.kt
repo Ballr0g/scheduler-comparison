@@ -1,4 +1,4 @@
-package io.scheduler.comparison.quartz.jobs.state
+package io.scheduler.comparison.quartz.jobs.state.data.impl
 
 import io.scheduler.comparison.quartz.domain.OrderStatus
 

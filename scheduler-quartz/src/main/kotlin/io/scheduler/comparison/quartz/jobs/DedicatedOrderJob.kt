@@ -2,8 +2,8 @@ package io.scheduler.comparison.quartz.jobs
 
 import io.scheduler.comparison.quartz.domain.OrderStatus
 import io.scheduler.comparison.quartz.jobs.handlers.JobHandler
-import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobData
-import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobMetadata
+import io.scheduler.comparison.quartz.jobs.state.data.impl.DedicatedOrderJobData
+import io.scheduler.comparison.quartz.jobs.state.data.impl.DedicatedOrderJobMetadata
 import org.quartz.Job
 import org.quartz.JobDataMap
 import org.quartz.JobExecutionContext

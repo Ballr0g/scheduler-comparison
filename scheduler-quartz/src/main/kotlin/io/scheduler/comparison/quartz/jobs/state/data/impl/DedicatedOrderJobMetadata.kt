@@ -1,4 +1,7 @@
-package io.scheduler.comparison.quartz.jobs.state
+package io.scheduler.comparison.quartz.jobs.state.data.impl
+
+import io.scheduler.comparison.quartz.jobs.state.data.ChunkedJobMetadata
+import io.scheduler.comparison.quartz.jobs.state.data.CronJobMetadata
 
 data class DedicatedOrderJobMetadata(
     override val jobName: String,

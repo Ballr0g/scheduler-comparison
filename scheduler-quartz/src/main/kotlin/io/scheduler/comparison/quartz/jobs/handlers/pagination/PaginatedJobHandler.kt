@@ -2,7 +2,7 @@ package io.scheduler.comparison.quartz.jobs.handlers.pagination
 
 import io.scheduler.comparison.quartz.jobs.handlers.JobHandler
 import io.scheduler.comparison.quartz.jobs.pagination.JobPaginator
-import io.scheduler.comparison.quartz.jobs.state.ChunkedJobMetadata
+import io.scheduler.comparison.quartz.jobs.state.data.ChunkedJobMetadata
 
 interface PaginatedJobHandler<T, V : ChunkedJobMetadata, K> : JobHandler<T, V> {
 

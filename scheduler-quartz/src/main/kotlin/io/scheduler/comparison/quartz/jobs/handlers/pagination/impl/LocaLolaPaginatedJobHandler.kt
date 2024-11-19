@@ -4,8 +4,8 @@ import io.scheduler.comparison.quartz.domain.OrderRefund
 import io.scheduler.comparison.quartz.jobs.JobHandlerNames
 import io.scheduler.comparison.quartz.jobs.handlers.pagination.PaginatedJobHandlerBase
 import io.scheduler.comparison.quartz.jobs.pagination.impl.listJobPaginator
-import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobData
-import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobMetadata
+import io.scheduler.comparison.quartz.jobs.state.data.impl.DedicatedOrderJobData
+import io.scheduler.comparison.quartz.jobs.state.data.impl.DedicatedOrderJobMetadata
 import io.scheduler.comparison.quartz.messaging.LocaLolaRefundsSender
 import io.scheduler.comparison.quartz.repositories.pagination.LocaLolaFailuresRepository
 import org.springframework.context.annotation.Profile

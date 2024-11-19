@@ -4,8 +4,8 @@ import io.scheduler.comparison.quartz.domain.OperationOnOrder
 import io.scheduler.comparison.quartz.jobs.JobHandlerNames
 import io.scheduler.comparison.quartz.jobs.handlers.pagination.PaginatedJobHandlerBase
 import io.scheduler.comparison.quartz.jobs.pagination.impl.listJobPaginator
-import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobData
-import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobMetadata
+import io.scheduler.comparison.quartz.jobs.state.data.impl.CommonOrderJobData
+import io.scheduler.comparison.quartz.jobs.state.data.impl.CommonOrderJobMetadata
 import io.scheduler.comparison.quartz.messaging.NotificationPlatformSender
 import io.scheduler.comparison.quartz.repositories.pagination.CommonOperationOnOrderRepository
 import org.springframework.context.annotation.Profile
@@ -29,6 +29,7 @@ class CommonPaginatedJobHandler(
        super.executeInternal(orderJobData, orderJobMetadata)
     }
 
+    // Todo: update read_count
     override fun handleNextPage(page: List<OperationOnOrder>) {
         notificationPlatformSender.sendAllOperationsOnOrder(page)
         val updatedIds = page.asSequence()

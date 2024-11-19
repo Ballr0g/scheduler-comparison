@@ -1,7 +1,7 @@
 package io.scheduler.comparison.quartz.jobs.handlers.streaming
 
 import io.scheduler.comparison.quartz.jobs.handlers.JobHandler
-import io.scheduler.comparison.quartz.jobs.state.JobMetadata
+import io.scheduler.comparison.quartz.jobs.state.data.JobMetadata
 import java.util.stream.Stream
 
 interface StreamBasedJobHandler<T, V : JobMetadata, K> : JobHandler<T, V> {

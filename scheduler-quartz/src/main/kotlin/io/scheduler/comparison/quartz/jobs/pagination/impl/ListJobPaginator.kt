@@ -1,7 +1,7 @@
 package io.scheduler.comparison.quartz.jobs.pagination.impl
 
 import io.scheduler.comparison.quartz.jobs.pagination.JobPaginator
-import io.scheduler.comparison.quartz.jobs.state.ChunkedJobMetadata
+import io.scheduler.comparison.quartz.jobs.state.data.ChunkedJobMetadata
 import kotlin.math.ceil
 import kotlin.math.min
 
