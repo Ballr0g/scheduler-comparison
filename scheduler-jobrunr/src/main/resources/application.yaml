@@ -46,8 +46,13 @@ spring:
 
 org:
   jobrunr:
+    jobs:
+      default-number-of-retries: 0
     background-job-server:
       enabled: true
+      metrics:
+        enabled: true
+      thread-type: platformthreads
     dashboard:
       enabled: true
     miscellaneous:
@@ -65,7 +70,7 @@ scheduler:
         job-handler: locaLolaDedicatedJobHandler
         merchant-ids: [4]
         order-statuses: [FAILED]
-        cron: "0 */1 * * * ?"
+        cron: "0 */1 * * * *"
         # Since this action does not intersect with the other flow, it can be executed concurrently.
         ignored-by-common: false
         max-count-per-execution: 30
@@ -74,14 +79,14 @@ scheduler:
         job-handler: wildFruitDedicatedJobHandler
         merchant-ids: [5]
         order-statuses: [PAID, DELIVERED, FAILED, CANCELLED]
-        cron: "0 */1 * * * ?"
+        cron: "0 */1 * * * *"
         max-count-per-execution: 30
         page-size: 10
     common-merchant-jobs:
       - name: "default"
         job-handler: commonJobHandler
         order-statuses: [PAID, DELIVERED, FAILED, CANCELLED]
-        cron: "0 */1 * * * ?"
+        cron: "0 */1 * * * *"
         max-count-per-execution: 30
         page-size: 10
 
@@ -97,8 +102,18 @@ spring:
     activate:
       on-profile: ram
 
+org:
+  jobrunr:
+    database:
+      skip-create: true
+
 ---
 spring:
   config:
     activate:
       on-profile: persistent
+
+org:
+  jobrunr:
+    database:
+      skip-create: false

@@ -1,5 +1,6 @@
 package io.scheduler.comparison.quartz.jobs
 
+// Todo: consider reusing the idea of JobRunr serializable "JobRequest" and use them instead of raw properties.
 /**
  * Used as a stronger formal contract to match parameter naming during putting params to org.quartz.JobDataMap and
  * extracting back from job context.

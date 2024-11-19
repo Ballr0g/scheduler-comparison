@@ -12,6 +12,7 @@ val liquibaseVersion: String by project
 val postgresVersion: String by project
 val kotlinLoggingVersion: String by project
 val jobRunrVersion: String by project
+val arrowKtVersion: String by project
 
 java {
     toolchain {
@@ -39,6 +40,11 @@ dependencies {
     // Kotlin logging.
     implementation("io.github.oshai:kotlin-logging:${kotlinLoggingVersion}")
     implementation("org.hibernate.validator:hibernate-validator")
+    // Jackson
+    implementation("com.fasterxml.jackson.core:jackson-databind")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+    // Arrow (Either)
+    implementation("io.arrow-kt:arrow-core:${arrowKtVersion}")
 
 
     // --> Test Implementation Dependencies <--
