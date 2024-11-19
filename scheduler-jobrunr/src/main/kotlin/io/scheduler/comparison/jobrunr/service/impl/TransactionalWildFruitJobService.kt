@@ -35,10 +35,8 @@ class TransactionalWildFruitJobService(
             return Either.Right(emptyList())
         }
 
-        val page = paginator.next()
-        val pageCancellationsExcluded = filteredOutCancellations(page)
-
-        val updatedIds = page.asSequence().map { it.id }.toSet()
+        val pageCancellationsExcluded = filteredOutCancellations(paginator.next())
+        val updatedIds = pageCancellationsExcluded.asSequence().map { it.id }.toSet()
         try {
             notificationPlatformSender.sendOperationsOnOrder(pageCancellationsExcluded)[MAX_KAFKA_WAIT_SECONDS, TimeUnit.SECONDS]
             return Either.Right(operationOnOrderRepository.updateOrderOperationsOnSuccess(updatedIds))
