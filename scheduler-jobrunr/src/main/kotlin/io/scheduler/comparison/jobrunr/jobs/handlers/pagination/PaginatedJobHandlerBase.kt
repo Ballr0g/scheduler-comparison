@@ -24,7 +24,7 @@ abstract class PaginatedJobHandlerBase<T : JobState<*, ChunkedJobMetadata>, V, K
         var totalSent = 0
         var pageSize: Int
         while (handleNextPage(paginator).also { pageSize = it.size }.isNotEmpty()) {
-            log.info { "Sent operations: [$pageSize/${jobState.jobMetadata.chunkSize}]" }
+            log.info { "[${jobState.jobMetadata.jobName}] Sent operations: [$pageSize/${jobState.jobMetadata.chunkSize}]" }
             totalSent += pageSize
         }
 
