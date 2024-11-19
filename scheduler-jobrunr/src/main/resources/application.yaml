@@ -112,3 +112,8 @@ spring:
   config:
     activate:
       on-profile: persistent
+
+org:
+  jobrunr:
+    database:
+      skip-create: false
