@@ -2,7 +2,7 @@ package io.scheduler.comparison.quartz.repositories.pagination
 
 import io.scheduler.comparison.quartz.domain.OperationOnOrder
 import io.scheduler.comparison.quartz.domain.OrderOperationStatus
-import io.scheduler.comparison.quartz.jobs.state.data.impl.DedicatedOrderJobData
+import io.scheduler.comparison.quartz.jobs.state.impl.DedicatedJobState
 import org.intellij.lang.annotations.Language
 import org.springframework.context.annotation.Profile
 import org.springframework.jdbc.core.simple.JdbcClient
@@ -55,12 +55,13 @@ class WildFruitOperationOnOrderRepository(
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun readUnprocessedWithReadCountIncrement(
         maxPageSize: Int,
-        orderJobData: DedicatedOrderJobData
+        orderJobState: DedicatedJobState
     ): List<OperationOnOrder> {
+        val jobData = orderJobState.jobData
         val updatedOrderStatuses = jdbcClient.sql(READ_UNPROCESSED_ORDER_OPERATIONS_SQL)
             .param("maxPageSize", maxPageSize)
-            .param("merchantIds", orderJobData.merchantIds)
-            .param("orderStatuses", orderJobData.orderStatuses.asSequence().map { it.value }.toSet())
+            .param("merchantIds", jobData.merchantIds)
+            .param("orderStatuses", jobData.orderStatuses.asSequence().map { it.value }.toSet())
             .query(OperationOnOrder::class.java)
             .list()
 

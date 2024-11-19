@@ -5,8 +5,7 @@ import io.scheduler.comparison.quartz.domain.OrderStatus
 import io.scheduler.comparison.quartz.jobs.JobHandlerNames
 import io.scheduler.comparison.quartz.jobs.handlers.pagination.PaginatedJobHandlerBase
 import io.scheduler.comparison.quartz.jobs.pagination.impl.listJobPaginator
-import io.scheduler.comparison.quartz.jobs.state.data.impl.DedicatedOrderJobData
-import io.scheduler.comparison.quartz.jobs.state.data.impl.DedicatedOrderJobMetadata
+import io.scheduler.comparison.quartz.jobs.state.impl.DedicatedJobState
 import io.scheduler.comparison.quartz.messaging.NotificationPlatformSender
 import io.scheduler.comparison.quartz.repositories.pagination.WildFruitOperationOnOrderRepository
 import org.springframework.context.annotation.Profile
@@ -18,16 +17,16 @@ import org.springframework.transaction.annotation.Transactional
 class WildFruitPaginatedJobHandler(
     private val operationOnOrderRepository: WildFruitOperationOnOrderRepository,
     private val notificationPlatformSender: NotificationPlatformSender,
-) : PaginatedJobHandlerBase<DedicatedOrderJobData, DedicatedOrderJobMetadata, OperationOnOrder>() {
+) : PaginatedJobHandlerBase<DedicatedJobState, OperationOnOrder>() {
 
     @Transactional
     override fun executeInternal(
-        orderJobData: DedicatedOrderJobData,
-        orderJobMetadata: DedicatedOrderJobMetadata
+        orderJobState: DedicatedJobState
     ) {
-        log.info { "[${orderJobMetadata.jobName}] Started: " +
-                "merchantIds=${orderJobData.merchantIds}, orderStatuses=${orderJobData.orderStatuses}" }
-        super.executeInternal(orderJobData, orderJobMetadata)
+        val jobData = orderJobState.jobData
+        log.info { "[${orderJobState.jobMetadata.jobName}] Started: " +
+                "merchantIds=${jobData.merchantIds}, orderStatuses=${jobData.orderStatuses}" }
+        super.executeInternal(orderJobState)
     }
 
     override fun handleNextPage(page: List<OperationOnOrder>) {
@@ -54,12 +53,8 @@ class WildFruitPaginatedJobHandler(
             .toList()
     }
 
-    override fun paginator(
-        jobData: DedicatedOrderJobData,
-        jobMetadata: DedicatedOrderJobMetadata
-    ) = listJobPaginator(
-        jobData = jobData,
-        jobMetadata = jobMetadata,
+    override fun paginator(jobState: DedicatedJobState) = listJobPaginator(
+        jobState = jobState,
         pageExtractor = operationOnOrderRepository::readUnprocessedWithReadCountIncrement
     )
 

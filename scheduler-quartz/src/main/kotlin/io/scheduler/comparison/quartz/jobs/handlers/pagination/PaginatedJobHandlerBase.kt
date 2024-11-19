@@ -1,10 +1,11 @@
 package io.scheduler.comparison.quartz.jobs.handlers.pagination
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.scheduler.comparison.quartz.jobs.state.JobState
 import io.scheduler.comparison.quartz.jobs.state.data.ChunkedJobMetadata
 import org.springframework.transaction.annotation.Transactional
 
-abstract class PaginatedJobHandlerBase<T, V : ChunkedJobMetadata, K> : PaginatedJobHandler<T, V, K> {
+abstract class PaginatedJobHandlerBase<T : JobState<*, ChunkedJobMetadata>, V> : PaginatedJobHandler<T, V> {
 
     protected companion object {
         @JvmStatic
@@ -12,17 +13,17 @@ abstract class PaginatedJobHandlerBase<T, V : ChunkedJobMetadata, K> : Paginated
     }
 
     @Transactional
-    override fun executeInternal(orderJobData: T, orderJobMetadata: V) {
-        val paginator = paginator(orderJobData, orderJobMetadata)
+    override fun executeInternal(orderJobState: T) {
+        val paginator = paginator(orderJobState)
 
         if (!paginator.hasNext()) {
-            log.info { "[${orderJobMetadata.jobName}] No new entries available, execution completed" }
+            log.info { "[${orderJobState.jobMetadata.jobName}] No new entries available, execution completed" }
             return
         }
 
         // Todo: fetch pages inside the same transaction.
         paginator.forEach { handleNextPage(it) }
-        log.info { "[${orderJobMetadata.jobName}] Completed successfully" }
+        log.info { "[${orderJobState.jobMetadata.jobName}] Completed successfully" }
     }
 
 }

@@ -1,6 +1,7 @@
 package io.scheduler.comparison.quartz.jobs.pagination.impl
 
 import io.scheduler.comparison.quartz.jobs.pagination.JobPaginator
+import io.scheduler.comparison.quartz.jobs.state.JobState
 import io.scheduler.comparison.quartz.jobs.state.data.ChunkedJobMetadata
 import kotlin.math.ceil
 import kotlin.math.min
@@ -8,28 +9,26 @@ import kotlin.math.min
 /**
  * An iterator implementation that uses an extractor function to retrieve its values from a data source as a List.
  */
-class ListJobPaginator<out T, V : ChunkedJobMetadata, K> private constructor(
-    override val jobData: T,
-    override val jobMetadata: V,
-    private val pageExtractor: (pageSize: Int, jobData: T) -> List<K>,
-) : JobPaginator<T, V, K> {
+class ListJobPaginator<T : JobState<*, ChunkedJobMetadata>, V> private constructor(
+    override val jobState: T,
+    private val pageExtractor: (pageSize: Int, jobData: T) -> List<V>,
+) : JobPaginator<T, V> {
 
-    data class Builder<T, V : ChunkedJobMetadata, K>(
-        var jobData: T,
-        var jobMetadata: V,
-        var pageExtractor: (pageSize: Int, jobData: T) -> List<K>,
+    data class Builder<T : JobState<*, ChunkedJobMetadata>, V>(
+        var jobState: T,
+        var pageExtractor: (pageSize: Int, jobData: T) -> List<V>,
     ) {
 
-        fun build() = ListJobPaginator(jobData, jobMetadata, pageExtractor)
+        fun build() = ListJobPaginator(jobState, pageExtractor)
 
     }
 
-    override val pageSize: Int = jobMetadata.chunkSize
+    override val pageSize: Int = jobState.jobMetadata.chunkSize
 
-    private var pagesLeft = ceil(jobMetadata.maxCountPerExecution.toDouble() / pageSize).toLong()
-    private var elementsLeft = jobMetadata.maxCountPerExecution
+    private var pagesLeft = ceil(jobState.jobMetadata.maxCountPerExecution.toDouble() / pageSize).toLong()
+    private var elementsLeft = jobState.jobMetadata.maxCountPerExecution
     private var elementsQueried = false
-    private var currentPage: List<K> = mutableListOf()
+    private var currentPage: List<V> = mutableListOf()
 
     /**
      * Reads the next page if max page count hasn't been reached yet. It is guaranteed to return the same
@@ -47,7 +46,7 @@ class ListJobPaginator<out T, V : ChunkedJobMetadata, K> private constructor(
 
         // Last page may actually have a stricter limit than pageSize. For example,
         // pageSize=2, maxCountPerExecution=3 should yield only 1 element for page 2 for 4 elements in the data store.
-        currentPage = pageExtractor(min(elementsLeft, pageSize), jobData)
+        currentPage = pageExtractor(min(elementsLeft, pageSize), jobState)
         elementsQueried = true
         return currentPage.isNotEmpty()
     }
@@ -56,7 +55,7 @@ class ListJobPaginator<out T, V : ChunkedJobMetadata, K> private constructor(
      * Queries the next page and returns its contents. If hasNext() was called previously, the cached page
      * will be returned.
      */
-    override fun next(): List<K> {
+    override fun next(): List<V> {
         if (!hasNext()) {
             throw NoSuchElementException()
         }
@@ -68,9 +67,8 @@ class ListJobPaginator<out T, V : ChunkedJobMetadata, K> private constructor(
     }
 }
 
-fun <T, V : ChunkedJobMetadata, K> listJobPaginator(
-    jobData: T,
-    jobMetadata: V,
-    pageExtractor: (pageSize: Int, jobData: T) -> List<K>,
-    buildActions: (ListJobPaginator.Builder<T, V, K>.() -> Unit)? = null
-) = ListJobPaginator.Builder(jobData, jobMetadata, pageExtractor).apply(buildActions ?: {}).build()
+fun <T : JobState<*, ChunkedJobMetadata>, V> listJobPaginator(
+    jobState: T,
+    pageExtractor: (pageSize: Int, jobData: T) -> List<V>,
+    buildActions: (ListJobPaginator.Builder<T, V>.() -> Unit)? = null
+) = ListJobPaginator.Builder(jobState, pageExtractor).apply(buildActions ?: {}).build()

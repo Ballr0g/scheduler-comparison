@@ -4,8 +4,7 @@ import io.scheduler.comparison.quartz.domain.OperationOnOrder
 import io.scheduler.comparison.quartz.domain.OrderStatus
 import io.scheduler.comparison.quartz.jobs.JobHandlerNames
 import io.scheduler.comparison.quartz.jobs.handlers.streaming.ChunkedStreamJobHandlerBase
-import io.scheduler.comparison.quartz.jobs.state.data.impl.DedicatedOrderJobData
-import io.scheduler.comparison.quartz.jobs.state.data.impl.DedicatedOrderJobMetadata
+import io.scheduler.comparison.quartz.jobs.state.impl.DedicatedJobState
 import io.scheduler.comparison.quartz.messaging.NotificationPlatformSender
 import io.scheduler.comparison.quartz.repositories.streaming.WildFruitStreamingOperationOnOrderRepository
 import org.springframework.context.annotation.Profile
@@ -17,19 +16,18 @@ import org.springframework.transaction.annotation.Transactional
 class WildFruitChunkedStreamJobHandler(
     private val operationOnOrderRepository: WildFruitStreamingOperationOnOrderRepository,
     private val notificationPlatformSender: NotificationPlatformSender,
-) : ChunkedStreamJobHandlerBase<DedicatedOrderJobData, DedicatedOrderJobMetadata, OperationOnOrder>() {
+) : ChunkedStreamJobHandlerBase<DedicatedJobState, OperationOnOrder>() {
 
     @Transactional
-    override fun executeInternal(orderJobData: DedicatedOrderJobData, orderJobMetadata: DedicatedOrderJobMetadata) {
-        log.info { "[${orderJobMetadata.jobName}] Started: " +
-                "merchantIds=${orderJobData.merchantIds}, orderStatuses=${orderJobData.orderStatuses}" }
-        super.executeInternal(orderJobData, orderJobMetadata)
+    override fun executeInternal(orderJobState: DedicatedJobState) {
+        val jobData = orderJobState.jobData
+        log.info { "[${orderJobState.jobMetadata.jobName}] Started: " +
+                "merchantIds=${jobData.merchantIds}, orderStatuses=${jobData.orderStatuses}" }
+        super.executeInternal(orderJobState)
     }
 
-    override fun openDataStream(
-        orderJobData: DedicatedOrderJobData,
-        orderJobMetadata: DedicatedOrderJobMetadata
-    ) = operationOnOrderRepository.readUnprocessedOperations(orderJobData, orderJobMetadata)
+    override fun openDataStream(orderJobState: DedicatedJobState)
+        = operationOnOrderRepository.readUnprocessedOperations(orderJobState)
 
     override fun handleNextChunk(chunk: List<OperationOnOrder>) {
         operationOnOrderRepository.incrementOperationsReadCount(chunk)

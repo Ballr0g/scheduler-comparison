@@ -4,6 +4,7 @@ import io.scheduler.comparison.quartz.domain.OrderStatus
 import io.scheduler.comparison.quartz.jobs.handlers.JobHandler
 import io.scheduler.comparison.quartz.jobs.state.data.impl.CommonOrderJobData
 import io.scheduler.comparison.quartz.jobs.state.data.impl.CommonOrderJobMetadata
+import io.scheduler.comparison.quartz.jobs.state.impl.CommonJobState
 import org.quartz.Job
 import org.quartz.JobDataMap
 import org.quartz.JobExecutionContext
@@ -17,16 +18,15 @@ import org.springframework.stereotype.Component
 @Component
 class CommonOrderJob : Job {
     @Autowired
-    private lateinit var jobHandlers: Map<String, JobHandler<CommonOrderJobData, CommonOrderJobMetadata>>
+    private lateinit var jobHandlers: Map<String, JobHandler<CommonJobState>>
 
-    private lateinit var orderJobData: CommonOrderJobData
-    private lateinit var orderJobMetadata: CommonOrderJobMetadata
-    private lateinit var jobHandler: JobHandler<CommonOrderJobData, CommonOrderJobMetadata>
+    private lateinit var orderJobState: CommonJobState
+    private lateinit var jobHandler: JobHandler<CommonJobState>
 
     override fun execute(context: JobExecutionContext) {
         try {
             initJobState(context)
-            jobHandler.executeInternal(orderJobData, orderJobMetadata)
+            jobHandler.executeInternal(orderJobState)
         } catch (e: Exception) {
             throw JobExecutionException(e)
         }
@@ -47,9 +47,13 @@ class CommonOrderJob : Job {
         jobHandler = jobHandlers[jobHandlerKey]
             ?: throw IllegalArgumentException("Unsupported jobHandler=${jobHandlerKey}, " +
                     "available options: ${jobHandlers.keys}")
-        orderJobData = buildJobData(jobDataMap)
-        orderJobMetadata = buildJobMetadata(jobDataMap)
+        orderJobState = buildJobState(jobDataMap)
     }
+
+    private fun buildJobState(jobDataMap: JobDataMap) = CommonJobState(
+        jobData = buildJobData(jobDataMap),
+        jobMetadata = buildJobMetadata(jobDataMap)
+    )
 
     private fun buildJobData(jobDataMap: JobDataMap)
             = @Suppress("UNCHECKED_CAST") (CommonOrderJobData(

@@ -2,7 +2,7 @@ package io.scheduler.comparison.quartz.repositories.pagination
 
 import io.scheduler.comparison.quartz.domain.OperationOnOrder
 import io.scheduler.comparison.quartz.domain.OrderOperationStatus
-import io.scheduler.comparison.quartz.jobs.state.data.impl.CommonOrderJobData
+import io.scheduler.comparison.quartz.jobs.state.impl.CommonJobState
 import org.intellij.lang.annotations.Language
 import org.springframework.context.annotation.Profile
 import org.springframework.jdbc.core.simple.JdbcClient
@@ -55,8 +55,9 @@ class CommonOperationOnOrderRepository(
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun readUnprocessedWithReadCountIncrement(
         maxPageSize: Int,
-        orderJobData: CommonOrderJobData
+        orderJobState: CommonJobState
     ): List<OperationOnOrder> {
+        val orderJobData = orderJobState.jobData
         val updatedOrderStatuses = jdbcClient.sql(READ_UNPROCESSED_ORDER_OPERATIONS_FOR_UPDATE_SQL)
             .param("maxPageSize", maxPageSize)
             .param("excludedMerchantIds", orderJobData.excludedMerchantIds.toTypedArray())

@@ -4,6 +4,7 @@ import io.scheduler.comparison.quartz.domain.OrderStatus
 import io.scheduler.comparison.quartz.jobs.handlers.JobHandler
 import io.scheduler.comparison.quartz.jobs.state.data.impl.DedicatedOrderJobData
 import io.scheduler.comparison.quartz.jobs.state.data.impl.DedicatedOrderJobMetadata
+import io.scheduler.comparison.quartz.jobs.state.impl.DedicatedJobState
 import org.quartz.Job
 import org.quartz.JobDataMap
 import org.quartz.JobExecutionContext
@@ -17,16 +18,15 @@ import org.springframework.stereotype.Component
 @Component
 class DedicatedOrderJob : Job {
     @Autowired
-    private lateinit var jobHandlers: Map<String, JobHandler<DedicatedOrderJobData, DedicatedOrderJobMetadata>>
+    private lateinit var jobHandlers: Map<String, JobHandler<DedicatedJobState>>
 
-    private lateinit var orderJobData: DedicatedOrderJobData
-    private lateinit var orderJobMetadata: DedicatedOrderJobMetadata
-    private lateinit var jobHandler: JobHandler<DedicatedOrderJobData, DedicatedOrderJobMetadata>
+    private lateinit var orderJobState: DedicatedJobState
+    private lateinit var jobHandler: JobHandler<DedicatedJobState>
 
     override fun execute(context: JobExecutionContext) {
         try {
             initJobState(context)
-            jobHandler.executeInternal(orderJobData, orderJobMetadata)
+            jobHandler.executeInternal(orderJobState)
         } catch (e: Exception) {
             throw JobExecutionException(e)
         }
@@ -47,9 +47,13 @@ class DedicatedOrderJob : Job {
         jobHandler = jobHandlers[jobHandlerKey]
             ?: throw IllegalArgumentException("Unsupported jobHandler=${jobHandlerKey}, " +
                     "available options: ${jobHandlers.keys}")
-        orderJobData = buildJobData(jobDataMap)
-        orderJobMetadata = buildJobMetadata(jobDataMap)
+        orderJobState = buildJobState(jobDataMap)
     }
+
+    private fun buildJobState(jobDataMap: JobDataMap) = DedicatedJobState(
+        jobData = buildJobData(jobDataMap),
+        jobMetadata = buildJobMetadata(jobDataMap)
+    )
 
     private fun buildJobData(jobDataMap: JobDataMap)
         = @Suppress("UNCHECKED_CAST") (DedicatedOrderJobData(

@@ -4,8 +4,7 @@ import io.scheduler.comparison.quartz.domain.OrderRefund
 import io.scheduler.comparison.quartz.jobs.JobHandlerNames
 import io.scheduler.comparison.quartz.jobs.handlers.pagination.PaginatedJobHandlerBase
 import io.scheduler.comparison.quartz.jobs.pagination.impl.listJobPaginator
-import io.scheduler.comparison.quartz.jobs.state.data.impl.DedicatedOrderJobData
-import io.scheduler.comparison.quartz.jobs.state.data.impl.DedicatedOrderJobMetadata
+import io.scheduler.comparison.quartz.jobs.state.impl.DedicatedJobState
 import io.scheduler.comparison.quartz.messaging.LocaLolaRefundsSender
 import io.scheduler.comparison.quartz.repositories.pagination.LocaLolaFailuresRepository
 import org.springframework.context.annotation.Profile
@@ -17,13 +16,14 @@ import org.springframework.transaction.annotation.Transactional
 class LocaLolaPaginatedJobHandler(
     private val locaLolaFailuresRepository: LocaLolaFailuresRepository,
     private val locaLolaRefundsSender: LocaLolaRefundsSender,
-) : PaginatedJobHandlerBase<DedicatedOrderJobData, DedicatedOrderJobMetadata, OrderRefund>() {
+) : PaginatedJobHandlerBase<DedicatedJobState, OrderRefund>() {
 
     @Transactional
-    override fun executeInternal(orderJobData: DedicatedOrderJobData, orderJobMetadata: DedicatedOrderJobMetadata) {
-        log.info { "[${orderJobMetadata.jobName}] Started: " +
-                "merchantIds=${orderJobData.merchantIds}, orderStatuses=${orderJobData.orderStatuses}" }
-        super.executeInternal(orderJobData, orderJobMetadata)
+    override fun executeInternal(orderJobState: DedicatedJobState) {
+        val jobData = orderJobState.jobData
+        log.info { "[${orderJobState.jobMetadata.jobName}] Started: " +
+                "merchantIds=${jobData.merchantIds}, orderStatuses=${jobData.orderStatuses}" }
+        super.executeInternal(orderJobState)
     }
 
     override fun handleNextPage(page: List<OrderRefund>) {
@@ -35,12 +35,8 @@ class LocaLolaPaginatedJobHandler(
         locaLolaFailuresRepository.closeEligibleForRefunds(refundIds)
     }
 
-    override fun paginator(
-        jobData: DedicatedOrderJobData,
-        jobMetadata: DedicatedOrderJobMetadata
-    ) = listJobPaginator(
-        jobData = jobData,
-        jobMetadata = jobMetadata,
+    override fun paginator(jobState: DedicatedJobState) = listJobPaginator(
+        jobState = jobState,
         pageExtractor = locaLolaFailuresRepository::readAvailableOrderRefunds
     )
 
