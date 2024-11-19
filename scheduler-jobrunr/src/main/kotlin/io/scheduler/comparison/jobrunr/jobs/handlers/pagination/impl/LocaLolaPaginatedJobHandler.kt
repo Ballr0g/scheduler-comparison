@@ -2,18 +2,17 @@ package io.scheduler.comparison.jobrunr.jobs.handlers.pagination.impl
 
 import io.scheduler.comparison.jobrunr.domain.OrderRefund
 import io.scheduler.comparison.jobrunr.jobs.handlers.pagination.PaginatedJobHandlerBase
-import io.scheduler.comparison.jobrunr.jobs.pagination.JobPaginator
-import io.scheduler.comparison.jobrunr.jobs.pagination.impl.listJobPaginator
 import io.scheduler.comparison.jobrunr.jobs.requests.pagination.DedicatedLocaLolaJobRequest
 import io.scheduler.comparison.jobrunr.jobs.state.impl.DedicatedJobState
-import io.scheduler.comparison.jobrunr.service.TransactionalLocaLolaJobService
+import io.scheduler.comparison.jobrunr.service.TransactionalPaginatedService
+import org.apache.kafka.common.KafkaException
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
 
 @Component
 @Profile("pagination")
 class LocaLolaPaginatedJobHandler(
-    private val transactionalLocaLolaJobService: TransactionalLocaLolaJobService
+    override val transactionalJobService: TransactionalPaginatedService<DedicatedJobState, OrderRefund, KafkaException>
 ) : PaginatedJobHandlerBase<DedicatedJobState, OrderRefund, DedicatedLocaLolaJobRequest>() {
 
     override fun run(jobRequest: DedicatedLocaLolaJobRequest) {
@@ -23,17 +22,5 @@ class LocaLolaPaginatedJobHandler(
 
         super.run(jobRequest)
     }
-
-    override fun handleNextPage(paginator: JobPaginator<DedicatedJobState, OrderRefund>)
-        = transactionalLocaLolaJobService.processPageTransactionally(paginator)
-            .fold<List<OrderRefund>> (
-                ifLeft = { ex -> throw ex },
-                ifRight = { operations -> return operations }
-            )
-
-    override fun paginator(jobState: DedicatedJobState) = listJobPaginator(
-        jobState = jobState,
-        pageExtractor = transactionalLocaLolaJobService.persistentRefundExtractor()
-    )
 
 }

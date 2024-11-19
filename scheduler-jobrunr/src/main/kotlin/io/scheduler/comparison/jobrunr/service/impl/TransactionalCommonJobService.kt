@@ -1,4 +1,4 @@
-package io.scheduler.comparison.jobrunr.service
+package io.scheduler.comparison.jobrunr.service.impl
 
 import arrow.core.Either
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -7,6 +7,7 @@ import io.scheduler.comparison.jobrunr.jobs.pagination.JobPaginator
 import io.scheduler.comparison.jobrunr.jobs.state.impl.CommonJobState
 import io.scheduler.comparison.jobrunr.messaging.NotificationPlatformSender
 import io.scheduler.comparison.jobrunr.repositories.pagination.CommonOperationOnOrderRepository
+import io.scheduler.comparison.jobrunr.service.TransactionalPaginatedService
 import org.apache.kafka.common.KafkaException
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
@@ -18,14 +19,16 @@ import java.util.concurrent.TimeUnit
 class TransactionalCommonJobService(
     private val operationOnOrderRepository: CommonOperationOnOrderRepository,
     private val notificationPlatformSender: NotificationPlatformSender,
-) {
+) : TransactionalPaginatedService<CommonJobState, OperationOnOrder, KafkaException> {
     private companion object {
         private val log = KotlinLogging.logger {}
         const val MAX_KAFKA_WAIT_SECONDS = 5L
     }
 
     @Transactional
-    fun handleNextPage(paginator: JobPaginator<CommonJobState, OperationOnOrder>): Either<KafkaException, List<OperationOnOrder>> {
+    @Suppress("DuplicatedCode")
+    // No common abstraction is expected for Common and WildFruit transactional service classes.
+    override fun processNextPageTransactionally(paginator: JobPaginator<CommonJobState, OperationOnOrder>): Either<KafkaException, List<OperationOnOrder>> {
         if (!paginator.hasNext()) {
             return Either.Right(emptyList())
         }
@@ -42,6 +45,6 @@ class TransactionalCommonJobService(
         }
     }
 
-    fun persistentOrderExtractor() = operationOnOrderRepository::readUnprocessedOrders
+    override fun persistentPageRefundExtractor() = operationOnOrderRepository::readUnprocessedOrders
 
 }

@@ -3,6 +3,7 @@ package io.scheduler.comparison.jobrunr.spring.application
 import io.scheduler.comparison.jobrunr.config.properties.StaticOrderJobProperties
 import io.scheduler.comparison.jobrunr.jobs.requests.pagination.CommonJobRequest
 import io.scheduler.comparison.jobrunr.jobs.requests.pagination.DedicatedLocaLolaJobRequest
+import io.scheduler.comparison.jobrunr.jobs.requests.pagination.DedicatedWildFruitJobRequest
 import io.scheduler.comparison.jobrunr.jobs.state.data.impl.CommonOrderJobData
 import io.scheduler.comparison.jobrunr.jobs.state.data.impl.CommonOrderJobMetadata
 import io.scheduler.comparison.jobrunr.jobs.state.data.impl.DedicatedOrderJobData
@@ -24,6 +25,9 @@ class JobRunrSetupApplicationRunner(
         jobExecutionProperties.dedicatedMerchantJobs.forEach {
             if (it.jobHandler == "locaLolaDedicatedJobHandler") {
                 registerDedicatedLocaLolaOrderJobHandler(it)
+            }
+            else if (it.jobHandler == "wildFruitDedicatedJobHandler") {
+                registerDedicatedWildFruitOrderJobHandler(it)
             }
         }
 
@@ -61,6 +65,23 @@ class JobRunrSetupApplicationRunner(
         orderJobProperties: StaticOrderJobProperties.StaticDedicatedMerchantsOrderJob
     ) {
         jobScheduler.scheduleRecurrently(orderJobProperties.cron, DedicatedLocaLolaJobRequest(DedicatedJobState(
+            jobData = DedicatedOrderJobData(
+                merchantIds = orderJobProperties.merchantIds.toSet(),
+                orderStatuses = orderJobProperties.orderStatuses.toSet()
+            ),
+            jobMetadata = DedicatedOrderJobMetadata(
+                jobName = orderJobProperties.name,
+                jobCron = orderJobProperties.cron,
+                chunkSize = orderJobProperties.pageSize,
+                maxCountPerExecution = orderJobProperties.maxCountPerExecution,
+            )
+        )))
+    }
+
+    private fun registerDedicatedWildFruitOrderJobHandler(
+        orderJobProperties: StaticOrderJobProperties.StaticDedicatedMerchantsOrderJob
+    ) {
+        jobScheduler.scheduleRecurrently(orderJobProperties.cron, DedicatedWildFruitJobRequest(DedicatedJobState(
             jobData = DedicatedOrderJobData(
                 merchantIds = orderJobProperties.merchantIds.toSet(),
                 orderStatuses = orderJobProperties.orderStatuses.toSet()
