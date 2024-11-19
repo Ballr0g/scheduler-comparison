@@ -1,4 +1,4 @@
-package io.scheduler.comparison.jobrunr.config.spring.application
+package io.scheduler.comparison.jobrunr.spring.application
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.context.ApplicationListener

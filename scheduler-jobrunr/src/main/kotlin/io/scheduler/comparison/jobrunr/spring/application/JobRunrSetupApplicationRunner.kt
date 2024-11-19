@@ -1,13 +1,19 @@
-package io.scheduler.comparison.jobrunr.config.spring.application
+package io.scheduler.comparison.jobrunr.spring.application
 
 import io.scheduler.comparison.jobrunr.config.properties.StaticOrderJobProperties
+import io.scheduler.comparison.jobrunr.jobs.requests.pagination.CommonJobRequest
+import io.scheduler.comparison.jobrunr.jobs.state.data.impl.CommonOrderJobData
+import io.scheduler.comparison.jobrunr.jobs.state.data.impl.CommonOrderJobMetadata
+import io.scheduler.comparison.jobrunr.jobs.state.impl.CommonJobState
+import org.jobrunr.scheduling.JobRequestScheduler
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
 import org.springframework.stereotype.Component
 
 @Component
 class JobRunrSetupApplicationRunner(
-    val jobExecutionProperties: StaticOrderJobProperties,
+    private val jobExecutionProperties: StaticOrderJobProperties,
+    private val jobScheduler: JobRequestScheduler,
 ) : ApplicationRunner {
 
     override fun run(args: ApplicationArguments?) {
@@ -31,7 +37,18 @@ class JobRunrSetupApplicationRunner(
         orderJobProperties: StaticOrderJobProperties.StaticCommonOrderJob,
         excludedMerchantIds: List<Long>
     ) {
-        TODO("Create a JobRunr-specific common implementation")
+        jobScheduler.scheduleRecurrently(orderJobProperties.cron, CommonJobRequest(CommonJobState(
+            jobData = CommonOrderJobData(
+                excludedMerchantIds = excludedMerchantIds.toSet(),
+                orderStatuses = orderJobProperties.orderStatuses.toSet()
+            ),
+            jobMetadata = CommonOrderJobMetadata(
+                jobName = orderJobProperties.name,
+                jobCron = orderJobProperties.cron,
+                chunkSize = orderJobProperties.pageSize,
+                maxCountPerExecution = orderJobProperties.maxCountPerExecution,
+            )
+        )))
     }
 
     private fun registerDedicatedOrderHandlingJob(

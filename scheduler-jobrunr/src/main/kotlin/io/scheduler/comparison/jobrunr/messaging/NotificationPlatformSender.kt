@@ -18,14 +18,14 @@ class NotificationPlatformSender(
     }
 
     // Todo: throw custom exception if Kafka gives up
-    fun sendAllOperationsOnOrder(operations: List<OperationOnOrder>) {
+    fun sendAllOperationsOnOrder(operations: List<OperationOnOrder>): CompletableFuture<*> {
         // Todo: match batch size of actual Kafka batch on the KafkaTemplate
 
         val targetTopic = kafkaTopics.topics[SupportedKafkaTopics.NOTIFICATION_PLATFORM.value]
             ?: throw IllegalArgumentException("Non-existent topic: ${SupportedKafkaTopics.NOTIFICATION_PLATFORM.value}, "
                     + "available: ${kafkaTopics.topics}")
 
-        CompletableFuture.allOf(*operations.asSequence()
+        return CompletableFuture.allOf(*operations.asSequence()
             .map{ kafkaTemplate.send(targetTopic, it) }
             .toList().toTypedArray()
         ).whenComplete { _, throwable ->
