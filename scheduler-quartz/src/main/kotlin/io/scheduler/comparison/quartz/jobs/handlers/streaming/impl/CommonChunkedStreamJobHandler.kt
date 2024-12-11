@@ -35,7 +35,7 @@ class CommonChunkedStreamJobHandler(
 
     override fun handleNextChunk(chunk: List<OperationOnOrder>) {
         val updatedRecords = operationOnOrderRepository.incrementOperationsReadCount(chunk)
-        notificationPlatformSender.sendAllOperationsOnOrder(updatedRecords)
+        notificationPlatformSender.sendOperationsOnOrder(updatedRecords)
         val updatedIds = updatedRecords.asSequence()
             .map { it.id }
             .toSet()

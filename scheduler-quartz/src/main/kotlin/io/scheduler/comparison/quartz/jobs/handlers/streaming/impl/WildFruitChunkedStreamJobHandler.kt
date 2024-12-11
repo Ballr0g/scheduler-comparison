@@ -32,7 +32,7 @@ class WildFruitChunkedStreamJobHandler(
     override fun handleNextChunk(chunk: List<OperationOnOrder>) {
         operationOnOrderRepository.incrementOperationsReadCount(chunk)
         val pageCancellationsExcluded = filteredOutCancellations(chunk)
-        notificationPlatformSender.sendAllOperationsOnOrder(pageCancellationsExcluded)
+        notificationPlatformSender.sendOperationsOnOrder(pageCancellationsExcluded)
 
         val updatedIds = pageCancellationsExcluded.asSequence()
             .map { it.id }

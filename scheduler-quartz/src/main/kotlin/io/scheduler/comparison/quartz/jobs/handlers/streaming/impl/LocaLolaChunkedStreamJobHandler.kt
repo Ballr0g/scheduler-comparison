@@ -35,7 +35,7 @@ class LocaLolaChunkedStreamJobHandler(
         = locaLolaFailuresRepository.readAvailableOrderRefunds(orderJobState)
 
     override fun handleNextChunk(chunk: List<OrderRefund>) {
-        locaLolaRefundsSender.sendAllRefunds(chunk)
+        locaLolaRefundsSender.sendOrderRefunds(chunk)
 
         val refundIds = chunk.asSequence()
             .map { it.id }

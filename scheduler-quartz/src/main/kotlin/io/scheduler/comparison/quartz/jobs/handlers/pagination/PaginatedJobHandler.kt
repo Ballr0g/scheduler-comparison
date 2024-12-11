@@ -7,7 +7,7 @@ import io.scheduler.comparison.quartz.jobs.state.data.ChunkedJobMetadata
 
 interface PaginatedJobHandler<T : JobState<*, ChunkedJobMetadata>, V> : JobHandler<T> {
 
-    fun handleNextPage(page: List<V>)
+    fun handleNextPage(paginator: JobPaginator<T, V>): Collection<V>
 
     fun paginator(jobState: T): JobPaginator<T, V>
 

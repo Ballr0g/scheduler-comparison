@@ -6,6 +6,8 @@ import org.intellij.lang.annotations.Language
 import org.springframework.context.annotation.Profile
 import org.springframework.jdbc.core.simple.JdbcClient
 import org.springframework.stereotype.Repository
+import org.springframework.transaction.annotation.Propagation
+import org.springframework.transaction.annotation.Transactional
 
 @Repository
 @Profile("pagination")
@@ -33,25 +35,29 @@ class LocaLolaFailuresRepository(
             UPDATE scheduler_quartz.order_refunds
             SET eligible_for_refund = false
             WHERE id IN (:refundIds)
+            RETURNING id, order_id, merchant_id, eligible_for_refund
         """
 
     }
 
+    @Transactional(propagation = Propagation.MANDATORY)
     fun readAvailableOrderRefunds(
         maxPageSize: Int,
         orderJobState: DedicatedJobState
     ): List<OrderRefund>
-        = jdbcClient.sql(READ_FAILURES_FOR_REFUND_SQL)
+            = jdbcClient.sql(READ_FAILURES_FOR_REFUND_SQL)
         .param("merchantIds", orderJobState.jobData.merchantIds)
         .param("maxPageSize", maxPageSize)
         .query(OrderRefund::class.java)
         .list()
 
-    fun closeEligibleForRefunds(refundIds: Set<Long>)
+    @Transactional(propagation = Propagation.MANDATORY)
+    fun closeEligibleForRefunds(refundIds: Collection<Long>)
             = if (refundIds.isNotEmpty()) {
         jdbcClient.sql(UPDATE_FAILURES_AS_NON_REFUNDABLE_SQL)
             .param("refundIds", refundIds)
-            .update()
-    } else 0
+            .query(OrderRefund::class.java)
+            .list()
+    } else emptyList()
 
 }
