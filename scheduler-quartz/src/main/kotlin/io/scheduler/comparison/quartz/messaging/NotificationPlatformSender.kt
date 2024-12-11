@@ -5,36 +5,22 @@ import io.scheduler.comparison.quartz.config.properties.KafkaTopics
 import io.scheduler.comparison.quartz.domain.OperationOnOrder
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Component
-import java.util.concurrent.CompletableFuture
 
 @Component
 class NotificationPlatformSender(
-    private val kafkaTemplate: KafkaTemplate<String, Any>,
-    private val kafkaTopics: KafkaTopics
-) {
+    kafkaTemplate: KafkaTemplate<String, Any>,
+    kafkaTopics: KafkaTopics
+) : KafkaTemplateSenderBase<OperationOnOrder>(kafkaTemplate, kafkaTopics) {
 
     private companion object {
         val log = KotlinLogging.logger {}
     }
 
-    // Todo: throw custom exception if Kafka gives up
-    fun sendAllOperationsOnOrder(operations: List<OperationOnOrder>) {
-        // Todo: match batch size of actual Kafka batch on the KafkaTemplate
-
-        val targetTopic = kafkaTopics.topics[SupportedKafkaTopics.NOTIFICATION_PLATFORM.value]
-            ?: throw IllegalArgumentException("Non-existent topic: ${SupportedKafkaTopics.NOTIFICATION_PLATFORM.value}, "
-                    + "available: ${kafkaTopics.topics}")
-
-        CompletableFuture.allOf(*operations.asSequence()
-            .map{ kafkaTemplate.send(targetTopic, it) }
-            .toList().toTypedArray()
-        ).whenComplete { _, throwable ->
-            if (throwable == null) {
-                log.info { "Successfully sent ${operations.size} operations on order to Notification platform" }
-            } else {
-                log.warn { "Failed sending operations on order to Notification platform, cause: ${throwable.message}" }
-            }
-        }
-    }
+    fun sendOperationsOnOrder(operations: Collection<OperationOnOrder>) = send(
+        topic = SupportedKafkaTopics.NOTIFICATION_PLATFORM,
+        messages = operations,
+        onSuccess = { orders -> log.info { "Successfully sent ${orders.size} operations on order to Notification platform" } },
+        onError = { throwable -> log.warn { "Failed sending operations on order to Notification platform, cause: ${throwable.message}" } }
+    )
 
 }

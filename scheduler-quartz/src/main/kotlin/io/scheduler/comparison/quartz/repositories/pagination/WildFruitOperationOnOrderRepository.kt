@@ -2,7 +2,7 @@ package io.scheduler.comparison.quartz.repositories.pagination
 
 import io.scheduler.comparison.quartz.domain.OperationOnOrder
 import io.scheduler.comparison.quartz.domain.OrderOperationStatus
-import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobData
+import io.scheduler.comparison.quartz.jobs.state.impl.DedicatedJobState
 import org.intellij.lang.annotations.Language
 import org.springframework.context.annotation.Profile
 import org.springframework.jdbc.core.simple.JdbcClient
@@ -20,7 +20,7 @@ class WildFruitOperationOnOrderRepository(
 
     private companion object {
         @Language("PostgreSQL")
-        const val READ_UNPROCESSED_ORDER_OPERATIONS_SQL =  """
+        const val READ_UNPROCESSED_ORDER_OPERATIONS_FOR_UPDATE_SQL =  """
                 SELECT id, order_id, order_statuses.merchant_id, status_change_time,
                     operation_status AS order_operation_status, record_read_count, order_status
                 FROM scheduler_quartz.order_statuses
@@ -32,62 +32,90 @@ class WildFruitOperationOnOrderRepository(
                 FOR UPDATE SKIP LOCKED
         """
 
-        // Todo: independently execute update after Kafka + limit max page size
         @Language("PostgreSQL")
-        const val INCREASE_UNPROCESSED_ORDER_OPERATION_READ_COUNT_SQL = """
+        const val UPDATE_SUCCESSFULLY_HANDLED_ORDER_OPERATION_SQL = """
             UPDATE scheduler_quartz.order_statuses
-            SET record_read_count = record_read_count + 1
+            SET
+                operation_status = :orderOperationStatus,
+                record_read_count = record_read_count + 1,
+                status_change_time = :statusChangeTime
             WHERE id IN (:ids)
             RETURNING id, order_id, order_statuses.merchant_id, status_change_time,
                 operation_status AS order_operation_status, record_read_count, order_status
         """
 
         @Language("PostgreSQL")
-        const val CHANGE_ORDER_OPERATION_STATUSES_SQL = """
+        const val UPDATE_ORDER_OPERATION_FAILURE_RETRY_SQL = """
+            UPDATE scheduler_quartz.order_statuses
+            SET
+                operation_status = CASE
+                    WHEN record_read_count < 5 THEN 'FOR_RETRY'
+                    ELSE 'RETRIES_EXCEEDED'
+                END,
+                record_read_count = record_read_count + 1,
+                status_change_time = :statusChangeTime
+            WHERE id IN (:ids)
+            RETURNING id, order_id, order_statuses.merchant_id, status_change_time,
+                operation_status AS order_operation_status, record_read_count, order_status
+        """
+
+        @Language("PostgreSQL")
+        const val UPDATE_ORDER_OPERATION_SET_STATUS_SQL = """
             UPDATE scheduler_quartz.order_statuses
             SET
                 operation_status = :orderOperationStatus,
+                record_read_count = record_read_count + 1,
                 status_change_time = :statusChangeTime
             WHERE id IN (:ids)
+            RETURNING id, order_id, order_statuses.merchant_id, status_change_time,
+                operation_status AS order_operation_status, record_read_count, order_status
         """
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    fun readUnprocessedWithReadCountIncrement(
+    @Transactional(propagation = Propagation.MANDATORY)
+    fun readUnprocessedOrders(
         maxPageSize: Int,
-        orderJobData: DedicatedOrderJobData
+        orderJobState: DedicatedJobState
     ): List<OperationOnOrder> {
-        val updatedOrderStatuses = jdbcClient.sql(READ_UNPROCESSED_ORDER_OPERATIONS_SQL)
+        val jobData = orderJobState.jobData
+        return jdbcClient.sql(READ_UNPROCESSED_ORDER_OPERATIONS_FOR_UPDATE_SQL)
             .param("maxPageSize", maxPageSize)
-            .param("merchantIds", orderJobData.merchantIds)
-            .param("orderStatuses", orderJobData.orderStatuses.asSequence().map { it.value }.toSet())
-            .query(OperationOnOrder::class.java)
-            .list()
-
-        // This might happen when the database is either empty or the entries are still locked by another action.
-        if (updatedOrderStatuses.isEmpty()) {
-            return emptyList()
-        }
-
-        return jdbcClient.sql(INCREASE_UNPROCESSED_ORDER_OPERATION_READ_COUNT_SQL)
-            .param("ids", updatedOrderStatuses.map { it.id }.toSet())
+            .param("merchantIds", jobData.merchantIds)
+            .param("orderStatuses", jobData.orderStatuses.asSequence().map { it.value }.toSet())
             .query(OperationOnOrder::class.java)
             .list()
     }
 
-    fun markOrderOperationsFailed(orderIds: Set<Long>) = markOrderOperationsAs(orderIds, OrderOperationStatus.ERROR)
+    @Transactional(propagation = Propagation.MANDATORY)
+    fun updateOrderOperationsOnSuccess(orderIds: Set<Long>): List<OperationOnOrder>
+            = if (orderIds.isNotEmpty()) {
+        jdbcClient.sql(UPDATE_SUCCESSFULLY_HANDLED_ORDER_OPERATION_SQL)
+            .param("orderOperationStatus", OrderOperationStatus.SENT_TO_NOTIFIER, Types.VARCHAR)
+            .param("statusChangeTime", LocalDateTime.now())
+            .param("ids", orderIds)
+            .query(OperationOnOrder::class.java)
+            .list()
+    } else emptyList()
 
-    fun markOrderOperationsAsProcessed(orderIds: Set<Long>)
-        = markOrderOperationsAs(orderIds, OrderOperationStatus.SENT_TO_NOTIFIER)
+    @Transactional(propagation = Propagation.MANDATORY)
+    fun markOrderOperationsAsError(orderIds: Set<Long>)
+            = if (orderIds.isNotEmpty()) {
+        jdbcClient.sql(UPDATE_ORDER_OPERATION_SET_STATUS_SQL)
+            .param("orderOperationStatus", OrderOperationStatus.ERROR, Types.VARCHAR)
+            .param("ids", orderIds)
+            .param("statusChangeTime", LocalDateTime.now())
+            .query(OperationOnOrder::class.java)
+            .list()
+    } else emptyList()
 
-    fun markOrderOperationsAs(orderIds: Set<Long>, status: OrderOperationStatus)
-        = if (orderIds.isNotEmpty()) {
-            jdbcClient.sql(CHANGE_ORDER_OPERATION_STATUSES_SQL)
-                .param("orderOperationStatus", status, Types.VARCHAR)
-                .param("ids", orderIds)
-                .param("statusChangeTime", LocalDateTime.now())
-                .update()
-    } else 0
-
+    @Transactional(propagation = Propagation.MANDATORY)
+    fun updateOrderOperationsOnFailure(orderIds: Set<Long>): List<OperationOnOrder>
+            = if (orderIds.isNotEmpty()) {
+        jdbcClient.sql(UPDATE_ORDER_OPERATION_FAILURE_RETRY_SQL)
+            .param("statusChangeTime", LocalDateTime.now())
+            .param("ids", orderIds)
+            .query(OperationOnOrder::class.java)
+            .list()
+    } else emptyList()
 
 }

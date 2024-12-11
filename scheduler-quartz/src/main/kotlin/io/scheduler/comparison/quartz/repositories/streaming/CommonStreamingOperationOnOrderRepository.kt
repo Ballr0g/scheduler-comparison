@@ -2,8 +2,7 @@ package io.scheduler.comparison.quartz.repositories.streaming
 
 import io.scheduler.comparison.quartz.domain.OperationOnOrder
 import io.scheduler.comparison.quartz.domain.OrderOperationStatus
-import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobData
-import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobMetadata
+import io.scheduler.comparison.quartz.jobs.state.impl.CommonJobState
 import io.scheduler.comparison.quartz.repositories.DomainRowMappers.operationOnOrderRowMapper
 import org.intellij.lang.annotations.Language
 import org.springframework.context.annotation.Profile
@@ -53,17 +52,15 @@ class CommonStreamingOperationOnOrderRepository(
 
     }
 
-    fun readUnprocessedOperations(
-        orderJobData: CommonOrderJobData,
-        orderJobMetadata: CommonOrderJobMetadata,
-    ): Stream<OperationOnOrder> = jdbcOperations.queryForStream(
-        READ_UNPROCESSED_ORDER_OPERATIONS_FOR_UPDATE_SQL,
-        mapOf(
-            "excludedMerchantIds" to orderJobData.excludedMerchantIds.toTypedArray(),
-            "orderStatuses" to orderJobData.orderStatuses.asSequence().map { it.value }.toSet(),
-            "maxCount" to orderJobMetadata.maxCountPerExecution,
-        ), operationOnOrderRowMapper
-    )
+    fun readUnprocessedOperations(orderJobState: CommonJobState): Stream<OperationOnOrder>
+        = jdbcOperations.queryForStream(
+            READ_UNPROCESSED_ORDER_OPERATIONS_FOR_UPDATE_SQL,
+            mapOf(
+                "excludedMerchantIds" to orderJobState.jobData.excludedMerchantIds.toTypedArray(),
+                "orderStatuses" to orderJobState.jobData.orderStatuses.asSequence().map { it.value }.toSet(),
+                "maxCount" to orderJobState.jobMetadata.maxCountPerExecution,
+            ), operationOnOrderRowMapper
+        )
 
     fun incrementOperationsReadCount(availableOperations: List<OperationOnOrder>): List<OperationOnOrder> {
         // This might happen when the database is either empty or the entries are still locked by another action.

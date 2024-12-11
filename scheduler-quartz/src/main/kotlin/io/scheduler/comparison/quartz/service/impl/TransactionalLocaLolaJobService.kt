@@ -1,0 +1,50 @@
+package io.scheduler.comparison.quartz.service.impl
+
+import arrow.core.Either
+import io.github.oshai.kotlinlogging.KotlinLogging
+import io.scheduler.comparison.quartz.domain.OrderRefund
+import io.scheduler.comparison.quartz.jobs.pagination.JobPaginator
+import io.scheduler.comparison.quartz.jobs.state.impl.DedicatedJobState
+import io.scheduler.comparison.quartz.messaging.LocaLolaRefundsSender
+import io.scheduler.comparison.quartz.repositories.pagination.LocaLolaFailuresRepository
+import io.scheduler.comparison.quartz.service.TransactionalPaginatedService
+import org.apache.kafka.common.KafkaException
+import org.springframework.context.annotation.Profile
+import org.springframework.stereotype.Component
+import org.springframework.transaction.annotation.Transactional
+import java.util.concurrent.TimeUnit
+
+@Component
+@Profile("pagination")
+class TransactionalLocaLolaJobService(
+    private val locaLolaFailuresRepository: LocaLolaFailuresRepository,
+    private val locaLolaRefundSender: LocaLolaRefundsSender,
+) : TransactionalPaginatedService<DedicatedJobState, OrderRefund, KafkaException> {
+
+    private companion object {
+        private val log = KotlinLogging.logger {}
+        const val MAX_KAFKA_WAIT_SECONDS = 5L
+    }
+
+    @Transactional
+    override fun processNextPageTransactionally(
+        paginator: JobPaginator<DedicatedJobState, OrderRefund>
+    ): Either<KafkaException, List<OrderRefund>> {
+        if (!paginator.hasNext()) {
+            return Either.Right(emptyList())
+        }
+
+        val page = paginator.next()
+        val updatedEntries = page.asSequence().map { it.id }.toSet()
+        try {
+            locaLolaRefundSender.sendOrderRefunds(page)[MAX_KAFKA_WAIT_SECONDS, TimeUnit.SECONDS]
+            return Either.Right(locaLolaFailuresRepository.closeEligibleForRefunds(updatedEntries))
+        } catch (e: Exception) {
+            log.warn { "Job page processing failed with error: ${e.message}" }
+            return Either.Left(KafkaException("Job failed with error: ${e.message}", e))
+        }
+    }
+
+    override fun persistentPageRefundExtractor() = locaLolaFailuresRepository::readAvailableOrderRefunds
+
+}

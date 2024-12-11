@@ -2,8 +2,7 @@ package io.scheduler.comparison.quartz.repositories.streaming
 
 import io.scheduler.comparison.quartz.domain.OperationOnOrder
 import io.scheduler.comparison.quartz.domain.OrderOperationStatus
-import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobData
-import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobMetadata
+import io.scheduler.comparison.quartz.jobs.state.impl.DedicatedJobState
 import io.scheduler.comparison.quartz.repositories.DomainRowMappers.operationOnOrderRowMapper
 import org.intellij.lang.annotations.Language
 import org.springframework.context.annotation.Profile
@@ -51,17 +50,15 @@ class WildFruitStreamingOperationOnOrderRepository(
         """
     }
 
-    fun readUnprocessedOperations(
-        orderJobData: DedicatedOrderJobData,
-        orderJobMetadata: DedicatedOrderJobMetadata,
-    ): Stream<OperationOnOrder> = jdbcOperations.queryForStream(
-        READ_UNPROCESSED_ORDER_OPERATIONS_SQL,
-        mapOf(
-            "merchantIds" to orderJobData.merchantIds,
-            "orderStatuses" to orderJobData.orderStatuses.asSequence().map { it.value }.toSet(),
-            "maxCount" to orderJobMetadata.maxCountPerExecution,
-        ), operationOnOrderRowMapper
-    )
+    fun readUnprocessedOperations(orderJobState: DedicatedJobState): Stream<OperationOnOrder>
+        = jdbcOperations.queryForStream(
+            READ_UNPROCESSED_ORDER_OPERATIONS_SQL,
+            mapOf(
+                "merchantIds" to orderJobState.jobData.merchantIds,
+                "orderStatuses" to orderJobState.jobData.orderStatuses.asSequence().map { it.value }.toSet(),
+                "maxCount" to orderJobState.jobMetadata.maxCountPerExecution,
+            ), operationOnOrderRowMapper
+        )
 
     fun incrementOperationsReadCount(availableOperations: List<OperationOnOrder>): List<OperationOnOrder> {
         // This might happen when the database is either empty or the entries are still locked by another action.

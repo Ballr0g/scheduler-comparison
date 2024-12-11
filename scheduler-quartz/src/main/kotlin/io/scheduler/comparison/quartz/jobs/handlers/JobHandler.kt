@@ -1,10 +1,9 @@
 package io.scheduler.comparison.quartz.jobs.handlers
 
-import io.scheduler.comparison.quartz.jobs.state.JobMetadata
+import io.scheduler.comparison.quartz.jobs.state.JobState
 
-// Todo: replace JobData/JobMetadata with JobState aggregate interface
-fun interface JobHandler<T, V : JobMetadata> {
+fun interface JobHandler<T : JobState<*, *>> {
 
-    fun executeInternal(orderJobData: T, orderJobMetadata: V)
+    fun executeInternal(orderJobState: T)
 
 }

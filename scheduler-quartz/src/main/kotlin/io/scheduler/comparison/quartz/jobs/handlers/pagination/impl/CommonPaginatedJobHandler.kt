@@ -3,11 +3,9 @@ package io.scheduler.comparison.quartz.jobs.handlers.pagination.impl
 import io.scheduler.comparison.quartz.domain.OperationOnOrder
 import io.scheduler.comparison.quartz.jobs.JobHandlerNames
 import io.scheduler.comparison.quartz.jobs.handlers.pagination.PaginatedJobHandlerBase
-import io.scheduler.comparison.quartz.jobs.pagination.impl.listJobPaginator
-import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobData
-import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobMetadata
-import io.scheduler.comparison.quartz.messaging.NotificationPlatformSender
-import io.scheduler.comparison.quartz.repositories.pagination.CommonOperationOnOrderRepository
+import io.scheduler.comparison.quartz.jobs.state.impl.CommonJobState
+import io.scheduler.comparison.quartz.service.TransactionalPaginatedService
+import org.apache.kafka.common.KafkaException
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
@@ -15,35 +13,17 @@ import org.springframework.transaction.annotation.Transactional
 @Profile("pagination")
 @Component(JobHandlerNames.COMMON_JOB_HANDLER)
 class CommonPaginatedJobHandler(
-    private val operationOnOrderRepository: CommonOperationOnOrderRepository,
-    private val notificationPlatformSender: NotificationPlatformSender,
-) : PaginatedJobHandlerBase<CommonOrderJobData, CommonOrderJobMetadata, OperationOnOrder>() {
+    override val transactionalJobService: TransactionalPaginatedService<CommonJobState, OperationOnOrder, KafkaException>,
+) : PaginatedJobHandlerBase<CommonJobState, OperationOnOrder>() {
 
     @Transactional
     override fun executeInternal(
-        orderJobData: CommonOrderJobData,
-        orderJobMetadata: CommonOrderJobMetadata
+        orderJobState: CommonJobState
     ) {
-        log.info { "[${orderJobMetadata.jobName}] Started: " +
-                "excludedMerchantIds=${orderJobData.excludedMerchantIds}, orderStatuses=${orderJobData.orderStatuses}" }
-       super.executeInternal(orderJobData, orderJobMetadata)
+        val jobData = orderJobState.jobData
+        log.info { "[${orderJobState.jobMetadata.jobName}] Started: " +
+                "excludedMerchantIds=${jobData.excludedMerchantIds}, orderStatuses=${jobData.orderStatuses}" }
+        super.executeInternal(orderJobState)
     }
-
-    override fun handleNextPage(page: List<OperationOnOrder>) {
-        notificationPlatformSender.sendAllOperationsOnOrder(page)
-        val updatedIds = page.asSequence()
-            .map { it.id }
-            .toSet()
-        operationOnOrderRepository.markOrderOperationsAsProcessed(updatedIds)
-    }
-
-    override fun paginator(
-        jobData: CommonOrderJobData,
-        jobMetadata: CommonOrderJobMetadata
-    ) = listJobPaginator(
-        jobData = jobData,
-        jobMetadata = jobMetadata,
-        pageExtractor = operationOnOrderRepository::readUnprocessedWithReadCountIncrement
-    )
 
 }

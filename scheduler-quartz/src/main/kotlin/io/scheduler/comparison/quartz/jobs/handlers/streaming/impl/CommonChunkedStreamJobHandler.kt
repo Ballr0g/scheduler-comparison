@@ -4,8 +4,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.scheduler.comparison.quartz.domain.OperationOnOrder
 import io.scheduler.comparison.quartz.jobs.JobHandlerNames
 import io.scheduler.comparison.quartz.jobs.handlers.streaming.ChunkedStreamJobHandlerBase
-import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobData
-import io.scheduler.comparison.quartz.jobs.state.CommonOrderJobMetadata
+import io.scheduler.comparison.quartz.jobs.state.impl.CommonJobState
 import io.scheduler.comparison.quartz.messaging.NotificationPlatformSender
 import io.scheduler.comparison.quartz.repositories.streaming.CommonStreamingOperationOnOrderRepository
 import org.springframework.context.annotation.Profile
@@ -17,25 +16,26 @@ import org.springframework.transaction.annotation.Transactional
 class CommonChunkedStreamJobHandler(
     private val operationOnOrderRepository: CommonStreamingOperationOnOrderRepository,
     private val notificationPlatformSender: NotificationPlatformSender,
-) : ChunkedStreamJobHandlerBase<CommonOrderJobData, CommonOrderJobMetadata, OperationOnOrder>() {
+) : ChunkedStreamJobHandlerBase<CommonJobState, OperationOnOrder>() {
 
     private companion object {
         private val log = KotlinLogging.logger {}
     }
 
     @Transactional
-    override fun executeInternal(orderJobData: CommonOrderJobData, orderJobMetadata: CommonOrderJobMetadata) {
-        log.info { "[${orderJobMetadata.jobName}] Started: " +
-                "excludedMerchantIds=${orderJobData.excludedMerchantIds}, orderStatuses=${orderJobData.orderStatuses}" }
-        super.executeInternal(orderJobData, orderJobMetadata)
+    override fun executeInternal(orderJobState: CommonJobState) {
+        val jobData = orderJobState.jobData
+        log.info { "[${orderJobState.jobMetadata.jobName}] Started: " +
+                "excludedMerchantIds=${jobData.excludedMerchantIds}, orderStatuses=${jobData.orderStatuses}" }
+        super.executeInternal(orderJobState)
     }
 
-    override fun openDataStream(orderJobData: CommonOrderJobData, orderJobMetadata: CommonOrderJobMetadata)
-            = operationOnOrderRepository.readUnprocessedOperations(orderJobData, orderJobMetadata)
+    override fun openDataStream(orderJobState: CommonJobState)
+            = operationOnOrderRepository.readUnprocessedOperations(orderJobState)
 
     override fun handleNextChunk(chunk: List<OperationOnOrder>) {
         val updatedRecords = operationOnOrderRepository.incrementOperationsReadCount(chunk)
-        notificationPlatformSender.sendAllOperationsOnOrder(updatedRecords)
+        notificationPlatformSender.sendOperationsOnOrder(updatedRecords)
         val updatedIds = updatedRecords.asSequence()
             .map { it.id }
             .toSet()

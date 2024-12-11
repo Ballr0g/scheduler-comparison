@@ -1,4 +1,4 @@
-package io.scheduler.comparison.quartz.config.spring.application
+package io.scheduler.comparison.quartz.spring.application
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.context.ApplicationListener

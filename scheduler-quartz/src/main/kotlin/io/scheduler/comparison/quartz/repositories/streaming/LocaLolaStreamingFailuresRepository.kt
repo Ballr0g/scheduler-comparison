@@ -1,8 +1,7 @@
 package io.scheduler.comparison.quartz.repositories.streaming
 
 import io.scheduler.comparison.quartz.domain.OrderRefund
-import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobData
-import io.scheduler.comparison.quartz.jobs.state.DedicatedOrderJobMetadata
+import io.scheduler.comparison.quartz.jobs.state.impl.DedicatedJobState
 import io.scheduler.comparison.quartz.repositories.DomainRowMappers.orderRefundRowMapper
 import org.intellij.lang.annotations.Language
 import org.springframework.context.annotation.Profile
@@ -40,16 +39,14 @@ class LocaLolaStreamingFailuresRepository(
 
     }
 
-    fun readAvailableOrderRefunds(
-        orderJobData: DedicatedOrderJobData,
-        orderJobMetadata: DedicatedOrderJobMetadata
-    ): Stream<OrderRefund> = jdbcOperations.queryForStream(READ_FAILURES_FOR_REFUND_SQL,
-        mapOf(
-            "merchantIds" to orderJobData.merchantIds,
-            "maxCount" to orderJobMetadata.maxCountPerExecution
-        ),
-        orderRefundRowMapper
-    )
+    fun readAvailableOrderRefunds(orderJobState: DedicatedJobState): Stream<OrderRefund>
+        = jdbcOperations.queryForStream(READ_FAILURES_FOR_REFUND_SQL,
+            mapOf(
+                "merchantIds" to orderJobState.jobData.merchantIds,
+                "maxCount" to orderJobState.jobMetadata.maxCountPerExecution
+            ),
+            orderRefundRowMapper
+        )
 
     fun closeEligibleForRefunds(refundIds: Set<Long>)
         = if (refundIds.isNotEmpty()) {

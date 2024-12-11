@@ -12,6 +12,7 @@ val liquibaseVersion: String by project
 val postgresVersion: String by project
 val kotlinLoggingVersion: String by project
 val jacksonJsr310Version: String by project
+val arrowKtVersion: String by project
 
 java {
     toolchain {
@@ -40,6 +41,8 @@ dependencies {
     // Jackson support for Java LocalDateTime
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonJsr310Version}")
     implementation("org.hibernate.validator:hibernate-validator")
+    // Arrow (Either)
+    implementation("io.arrow-kt:arrow-core:${arrowKtVersion}")
 
 
     // --> Test Implementation Dependencies <--

@@ -1,10 +1,16 @@
-package io.scheduler.comparison.quartz.config.spring.application
+package io.scheduler.comparison.quartz.spring.application
 
 import io.scheduler.comparison.quartz.config.properties.StaticOrderJobProperties
 import io.scheduler.comparison.quartz.jobs.CommonOrderJob
 import io.scheduler.comparison.quartz.jobs.CommonOrderJobParams
 import io.scheduler.comparison.quartz.jobs.DedicatedOrderJob
 import io.scheduler.comparison.quartz.jobs.DedicatedOrderJobParams
+import io.scheduler.comparison.quartz.jobs.state.data.impl.CommonOrderJobData
+import io.scheduler.comparison.quartz.jobs.state.data.impl.CommonOrderJobMetadata
+import io.scheduler.comparison.quartz.jobs.state.data.impl.DedicatedOrderJobData
+import io.scheduler.comparison.quartz.jobs.state.data.impl.DedicatedOrderJobMetadata
+import io.scheduler.comparison.quartz.jobs.state.impl.CommonJobState
+import io.scheduler.comparison.quartz.jobs.state.impl.DedicatedJobState
 import org.quartz.CronScheduleBuilder
 import org.quartz.JobBuilder
 import org.quartz.JobDataMap
@@ -55,12 +61,18 @@ class QuartzSetupApplicationRunner(
     ) = JobBuilder.newJob(CommonOrderJob::class.java)
         .withIdentity(orderJobProperties.name)
         .usingJobData(JobDataMap(mapOf(
-            CommonOrderJobParams.JOB_NAME.value to orderJobProperties.name,
-            CommonOrderJobParams.EXCLUDED_MERCHANT_IDS.value to excludedMerchantIds,
-            CommonOrderJobParams.ORDER_STATUSES.value to orderJobProperties.orderStatuses,
-            CommonOrderJobParams.JOB_CRON.value to orderJobProperties.cron,
-            CommonOrderJobParams.PAGE_SIZE.value to orderJobProperties.pageSize,
-            CommonOrderJobParams.MAX_COUNT_PER_EXECUTION.value to orderJobProperties.maxCountPerExecution,
+            CommonOrderJobParams.JOB_STATE.value to CommonJobState(
+                jobData = CommonOrderJobData(
+                    excludedMerchantIds = excludedMerchantIds.toSet(),
+                    orderStatuses = orderJobProperties.orderStatuses.toSet()
+                ),
+                jobMetadata = CommonOrderJobMetadata(
+                    jobName = orderJobProperties.name,
+                    jobCron = orderJobProperties.cron,
+                    chunkSize = orderJobProperties.pageSize,
+                    maxCountPerExecution = orderJobProperties.maxCountPerExecution,
+                )
+            ),
             CommonOrderJobParams.JOB_HANDLER.value to orderJobProperties.jobHandler,
         )))
         .build()
@@ -92,12 +104,18 @@ class QuartzSetupApplicationRunner(
     ) = JobBuilder.newJob(DedicatedOrderJob::class.java)
         .withIdentity(orderJobProperties.name)
         .usingJobData(JobDataMap(mapOf(
-            DedicatedOrderJobParams.JOB_NAME.value to orderJobProperties.name,
-            DedicatedOrderJobParams.MERCHANT_IDS.value to orderJobProperties.merchantIds,
-            DedicatedOrderJobParams.ORDER_STATUSES.value to orderJobProperties.orderStatuses,
-            DedicatedOrderJobParams.JOB_CRON.value to orderJobProperties.cron,
-            DedicatedOrderJobParams.PAGE_SIZE.value to orderJobProperties.pageSize,
-            DedicatedOrderJobParams.MAX_COUNT_PER_EXECUTION.value to orderJobProperties.maxCountPerExecution,
+            DedicatedOrderJobParams.JOB_STATE.value to DedicatedJobState(
+                jobData = DedicatedOrderJobData(
+                    merchantIds = orderJobProperties.merchantIds.toSet(),
+                    orderStatuses = orderJobProperties.orderStatuses.toSet()
+                ),
+                jobMetadata = DedicatedOrderJobMetadata(
+                    jobName = orderJobProperties.name,
+                    jobCron = orderJobProperties.cron,
+                    chunkSize = orderJobProperties.pageSize,
+                    maxCountPerExecution = orderJobProperties.maxCountPerExecution,
+                )
+            ),
             DedicatedOrderJobParams.JOB_HANDLER.value to orderJobProperties.jobHandler,
         )))
         .build()
