@@ -5,7 +5,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.scheduler.comparison.jobrunr.domain.OrderRefund
 import io.scheduler.comparison.jobrunr.jobs.pagination.JobPaginator
 import io.scheduler.comparison.jobrunr.jobs.state.impl.DedicatedJobState
-import io.scheduler.comparison.jobrunr.messaging.NotificationPlatformSender
+import io.scheduler.comparison.jobrunr.messaging.LocaLolaRefundsSender
 import io.scheduler.comparison.jobrunr.repositories.pagination.LocaLolaFailuresRepository
 import io.scheduler.comparison.jobrunr.service.TransactionalPaginatedService
 import org.apache.kafka.common.KafkaException
@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit
 @Profile("pagination")
 class TransactionalLocaLolaJobService(
     private val locaLolaFailuresRepository: LocaLolaFailuresRepository,
-    private val notificationPlatformSender: NotificationPlatformSender,
+    private val locaLolaRefundSender: LocaLolaRefundsSender,
 ) : TransactionalPaginatedService<DedicatedJobState, OrderRefund, KafkaException> {
 
     private companion object {
@@ -37,7 +37,7 @@ class TransactionalLocaLolaJobService(
         val page = paginator.next()
         val updatedEntries = page.asSequence().map { it.id }.toSet()
         try {
-            notificationPlatformSender.sendOrderRefunds(page)[MAX_KAFKA_WAIT_SECONDS, TimeUnit.SECONDS]
+            locaLolaRefundSender.sendOrderRefunds(page)[MAX_KAFKA_WAIT_SECONDS, TimeUnit.SECONDS]
             return Either.Right(locaLolaFailuresRepository.closeEligibleForRefunds(updatedEntries))
         } catch (e: Exception) {
             log.warn { "Job page processing failed with error: ${e.message}" }
