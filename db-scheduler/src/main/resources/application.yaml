@@ -49,6 +49,9 @@ kafka:
     notification-platform: order-statuses-db-scheduler.1
     loca-lola-refunds: loca-lola-refunds-db-scheduler.1
 
+db-scheduler:
+  table-name: 'db_scheduler.scheduled_tasks'
+
 scheduler:
   jobs:
     dedicated-merchant-jobs:
