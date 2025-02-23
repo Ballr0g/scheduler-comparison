@@ -11,8 +11,7 @@ spring:
   profiles:
     active:
       - ${SPRING_PROFILE_NAME:dev}
-      # - persistent
-      - ram
+      # Since db-scheduler does not provide RAM-based storage the parameter won't be used for the comparison.
       # - streaming
       - pagination
       # - clustered
@@ -59,7 +58,7 @@ scheduler:
         job-handler: locaLolaDedicatedJobHandler
         merchant-ids: [4]
         order-statuses: [FAILED]
-        cron: "0 */1 * * * *"
+        cron: "0 */1 * * * ?"
         # Since this action does not intersect with the other flow, it can be executed concurrently.
         ignored-by-common: false
         max-count-per-execution: 30
@@ -68,14 +67,14 @@ scheduler:
         job-handler: wildFruitDedicatedJobHandler
         merchant-ids: [5]
         order-statuses: [PAID, DELIVERED, FAILED, CANCELLED]
-        cron: "0 */1 * * * *"
+        cron: "0 */1 * * * ?"
         max-count-per-execution: 30
         page-size: 10
     common-merchant-jobs:
       - name: "default"
         job-handler: commonJobHandler
         order-statuses: [PAID, DELIVERED, FAILED, CANCELLED]
-        cron: "0 */1 * * * *"
+        cron: "0 */1 * * * ?"
         max-count-per-execution: 30
         page-size: 10
 
@@ -84,15 +83,3 @@ spring:
   config:
     activate:
       on-profile: clustered
-
----
-spring:
-  config:
-    activate:
-      on-profile: ram
-
----
-spring:
-  config:
-    activate:
-      on-profile: persistent
