@@ -8,7 +8,6 @@ import io.scheduler.comparison.quartz.service.TransactionalPaginatedService
 import org.apache.kafka.common.KafkaException
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
-import org.springframework.transaction.annotation.Transactional
 
 @Profile("pagination")
 @Component(JobHandlerNames.COMMON_JOB_HANDLER)
@@ -16,7 +15,6 @@ class CommonPaginatedJobHandler(
     override val transactionalJobService: TransactionalPaginatedService<CommonJobState, OperationOnOrder, KafkaException>,
 ) : PaginatedJobHandlerBase<CommonJobState, OperationOnOrder>() {
 
-    @Transactional
     override fun executeInternal(
         orderJobState: CommonJobState
     ) {
