@@ -1,0 +1,31 @@
+databaseChangeLog:
+  -   changeSet:
+        id: '1.0.0-01-0'
+        author: 'ballr0g'
+        comment: 'Create table merchants'
+        changes:
+          - createTable:
+              tableName: merchants
+              schemaName: db_scheduler
+              remarks: 'The table for storing merchants of our marketplace'
+              columns:
+                - column:
+                    name: id
+                    type: bigint
+                    remarks: 'Unique id of the merchant.'
+                    autoIncrement: true
+                    constraints:
+                      primaryKey: true
+                - column:
+                    name: login
+                    type: varchar(127)
+                    remarks: 'Name of the merchant'
+                    constraints:
+                      nullable: false
+                - column:
+                    name: is_large_scale
+                    type: boolean
+                    remarks: 'Is this considered a large-scale merchant'
+                    defaultValueBoolean: false
+                    constraints:
+                      nullable: false

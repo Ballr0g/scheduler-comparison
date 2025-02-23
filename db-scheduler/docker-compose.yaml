@@ -1,0 +1,55 @@
+services:
+  postgres:
+    image: postgres:17.0
+    container_name: marketplace-db-scheduler
+    ports:
+      - '5434:5432'
+    environment:
+      POSTGRES_DB: 'db_marketplace_db_scheduler'
+      POSTGRES_USER: 'dbusername'
+      POSTGRES_PASSWORD: 'dbpassword'
+    labels:
+      org.springframework.boot.ignore: true
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.7.1
+    container_name: marketplace-db-scheduler-kafka-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2183
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - '22183:2183'
+
+  kafka:
+    image: confluentinc/cp-kafka:7.7.1
+    container_name: marketplace-db-scheduler-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - '29094:29094'
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2183
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9094,PLAINTEXT_HOST://localhost:29094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  init-kafka:
+    image: confluentinc/cp-kafka:7.7.1
+    container_name: marketplace-db-scheduler-kafka-init
+    depends_on:
+      - kafka
+    entrypoint: [ '/bin/sh', '-c' ]
+    command: |
+      "
+      # blocks until kafka is reachable
+      kafka-topics --bootstrap-server kafka:9094 --list
+
+      echo -e 'Creating kafka topics...'
+      kafka-topics --bootstrap-server kafka:9094 --create --if-not-exists --topic order-statuses-db-scheduler.1 --replication-factor 1 --partitions 1
+      kafka-topics --bootstrap-server kafka:9094 --create --if-not-exists --topic loca-lola-refunds-db-scheduler.1 --replication-factor 1 --partitions 1
+
+      echo -e 'Available topics after setup:'
+      kafka-topics --bootstrap-server kafka:9094 --list
+      "

@@ -1,3 +1,85 @@
+logging:
+  level:
+    org.springframework.boot.diagnostics.LoggingFailureAnalysisReporter: DEBUG
+
+server:
+  shutdown: graceful
+
 spring:
   application:
     name: 'db-scheduler'
+  profiles:
+    active:
+      - ${SPRING_PROFILE_NAME:dev}
+      # Since db-scheduler does not provide RAM-based storage the parameter won't be used for the comparison.
+      # - streaming
+      - pagination
+      # - clustered
+      - standalone
+  lifecycle:
+    timeout-per-shutdown-phase: 4m
+  main:
+    banner-mode: off
+  mvc:
+    converters:
+      preferred-json-mapper: jackson
+  docker:
+    compose:
+      enabled: true
+      file: db-scheduler/docker-compose.yaml
+  datasource:
+    username: ${DB_USERNAME:dbusername}
+    password: ${DB_PASSWORD:dbpassword}
+    url: ${DB_URL:jdbc:postgresql://localhost:5434/db_marketplace_db_scheduler}
+    type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      connection-timeout: 5000
+      validation-timeout: 2000
+      leak-detection-threshold: 300000
+  liquibase:
+    changelog: classpath:/db/changelog/changelog.yaml
+  kafka:
+    producer:
+      bootstrap-servers: localhost:29094
+      client-id: scheduler-comparison-db-scheduler-1
+
+kafka:
+  topics:
+    notification-platform: order-statuses-db-scheduler.1
+    loca-lola-refunds: loca-lola-refunds-db-scheduler.1
+
+db-scheduler:
+  table-name: 'db_scheduler.scheduled_tasks'
+
+scheduler:
+  jobs:
+    dedicated-merchant-jobs:
+      - name: "Loca-Lola failure refunds"
+        job-handler: locaLolaDedicatedJobHandler
+        merchant-ids: [4]
+        order-statuses: [FAILED]
+        cron: "0 */1 * * * ?"
+        # Since this action does not intersect with the other flow, it can be executed concurrently.
+        ignored-by-common: false
+        max-count-per-execution: 30
+        page-size: 10
+      - name: "WildFruit handler"
+        job-handler: wildFruitDedicatedJobHandler
+        merchant-ids: [5]
+        order-statuses: [PAID, DELIVERED, FAILED, CANCELLED]
+        cron: "0 */1 * * * ?"
+        max-count-per-execution: 30
+        page-size: 10
+    common-merchant-jobs:
+      - name: "default"
+        job-handler: commonJobHandler
+        order-statuses: [PAID, DELIVERED, FAILED, CANCELLED]
+        cron: "0 */1 * * * ?"
+        max-count-per-execution: 30
+        page-size: 10
+
+---
+spring:
+  config:
+    activate:
+      on-profile: clustered

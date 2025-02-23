@@ -8,7 +8,6 @@ import io.scheduler.comparison.quartz.service.TransactionalPaginatedService
 import org.apache.kafka.common.KafkaException
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
-import org.springframework.transaction.annotation.Transactional
 
 @Profile("pagination")
 @Component(JobHandlerNames.LOCA_LOLA_DEDICATED_JOB_HANDLER)
@@ -16,7 +15,6 @@ class LocaLolaPaginatedJobHandler(
     override val transactionalJobService: TransactionalPaginatedService<DedicatedJobState, OrderRefund, KafkaException>,
 ) : PaginatedJobHandlerBase<DedicatedJobState, OrderRefund>() {
 
-    @Transactional
     override fun executeInternal(orderJobState: DedicatedJobState) {
         val jobData = orderJobState.jobData
         log.info { "[${orderJobState.jobMetadata.jobName}] Started: " +
